@@ -1,6 +1,6 @@
 # AnathemaFE Loader
 
-Public runtime entry for the private `NoooOneLoveMe/AnathemaFE` source repository.
+公开运行入口，加载 AnathemaFE 的 Uhhhhhh-compatible 核心与本地 builtin 映射。
 
 ## Test
 
@@ -10,14 +10,11 @@ loadstring(game:HttpGet(
 ))()
 ```
 
-The client can only execute code that is publicly downloadable. The private repository remains the development/source repository; `core.lua` is the current release artifact and should be replaced with the obfuscated build when the obfuscation pipeline is ready.
-
 ## Files
 
 - `loader.lua`: stable public loadstring entry
-- `core.lua`: current runtime artifact
-- `.github/workflows/sync-core.yml`: optional private-source sync workflow
+- `core.lua`: Uhhhhhh `1.0.9 BETA` compatible runtime with AnathemaFE modern UI skin
+- `d_limbmap.lua`: Limb Reanimator mapping
+- `d_hatsmap.lua`: Hat Reanimator mapping
 
-## Sync secret
-
-Add a repository secret named `ANATHEMA_SOURCE_TOKEN` with read access to `NoooOneLoveMe/AnathemaFE`, then run the `Sync private AnathemaFE core` workflow manually. The workflow publishes the selected release artifact to this public runtime repository.
+The private repository remains the development/source repository. The runtime artifact must be downloadable by the client, so `core.lua` and the two mapping files are public release artifacts.
