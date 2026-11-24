@@ -1329,6 +1329,34 @@ local UIMainWindow, WindowContent do
 -- this layer modernizes the visual primitives without replacing its modules.
 local AnathemaAccent = Color3.fromRGB(126, 92, 255)
 local AnathemaPanel = Color3.fromRGB(22, 24, 38)
+local AnathemaScale = Instance.new("UIScale")
+AnathemaScale.Name = "AnathemaResponsiveScale"
+AnathemaScale.Parent = UIMainWindow
+local function AnathemaUpdateScale()
+    local viewport = Util.GetScreenSize()
+    AnathemaScale.Scale = math.clamp(math.min(viewport.X / 720, viewport.Y / 480), 0.75, 1.35)
+end
+AnathemaUpdateScale()
+if Camera then
+    Camera:GetPropertyChangedSignal("ViewportSize"):Connect(AnathemaUpdateScale)
+end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    task.defer(function()
+        if workspace.CurrentCamera then
+            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(AnathemaUpdateScale)
+        end
+        AnathemaUpdateScale()
+    end)
+end)
+local AnathemaGradient = Instance.new("UIGradient")
+AnathemaGradient.Name = "AnathemaWindowGradient"
+AnathemaGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 30, 58)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 14, 24)),
+})
+AnathemaGradient.Rotation = 90
+AnathemaGradient.Transparency = NumberSequence.new(0.18)
+AnathemaGradient.Parent = UIMainWindow
 local function AnathemaModernize(obj)
     task.defer(function()
         if not obj or not obj.Parent then return end
