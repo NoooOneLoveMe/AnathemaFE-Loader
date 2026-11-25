@@ -527,131 +527,6 @@ do
 	end
 end
 
-Util.GetCDNAsset = function(filename)
-	local path = "UhhhhhhReanim/Assets/" .. filename
-	local s, id = pcall(isfile, path)
-	if s and id then
-		s, id = pcall(getcustomasset, path)
-		if s then return id end
-	end
-	return ""
-end
-
-Util.MakeTriforce = function(tris, color, dur)
-	dur = dur or 8
-	local function CreateTriangle(parent, radius, width, rotation, color)
-		local height = (math.sqrt(3) / 2) * width
-		local pivot = Util.Instance("Frame", parent)
-		pivot.AnchorPoint = Vector2.new(0.5, 0.5)
-		pivot.Position = UDim2.new(0.5, 0, 0.5, 0)
-		pivot.Size = UDim2.new(1, 0, 1, 0)
-		pivot.BackgroundTransparency = 1
-		pivot.BorderSizePixel = 0
-		pivot.Rotation = rotation
-		local tri = Util.Instance("ImageLabel", pivot)
-		tri.AnchorPoint = Vector2.new(0.5, 1)
-		tri.Position = UDim2.new(0.5, 0, 0.5 - radius, 0)
-		tri.Size = UDim2.new(width, 0, height, 0)
-		tri.BackgroundTransparency = 1
-		tri.BorderSizePixel = 0
-		tri.Image = Util.GetCDNAsset("letriangul.graphic.png")
-		local grey = math.max(color.R, color.G, color.B) * 0.5
-		tri.ImageColor3 = Color3.new(grey, grey, grey)
-		TweenService:Create(tri, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
-			ImageColor3 = color
-		}):Play()
-	end
-	local radius = 0.1
-	local pivot = Util.Instance("Frame")
-	pivot.AnchorPoint = Vector2.new(0.5, 0.5)
-	pivot.Position = UDim2.new(0.5, 0, 0.5, 0)
-	pivot.BackgroundTransparency = 1
-	pivot.BorderSizePixel = 0
-	local width = 2 * radius * math.sin(math.pi / tris) * 2
-	for i=1, tris do
-		CreateTriangle(pivot, radius, width, (i / tris) * 360, color)
-	end
-	return pivot
-end
-Util.MakeText = function(text)
-	text = text:upper()
-	local ls = "BCDEIKOPQRSTUVYZ\\_`N^MJ"
-	local lt = ""
-	-- !, ", #, $, %, &, ', (, ), *, +, ,, -, ., /
-	lt ..= "DDDDD@DFF@@@@@FSFSFSF@@@@@@@@@@@@@@EMMUKKTDD@@@@@DEEEEEDDBBBBBD@@@@@@@@@@@@@@@@@@@DE@@@G@@@@@@@@@DABBDEEI"
-	-- numbers
-	lt ..= "GJJJJJGDVDDDDSGJAGIISRAAGAARWJJSAAASIIRAARGIIRJJGSAABBDDGJJGJJGGJJHAAG"
-	-- :, ;, <, =, >, ?, @
-	lt ..= "@DD@DD@@DD@DE@@BDEDB@@@G@G@@@EDBDE@GJABD@D@@@@@@@"
-	-- capital letters
-	lt ..= "DFJSJJJRJJRJJRGJIIIJGRJJJJJRSIIRIISSIIRIIIHIILJJHJJJSJJJGDDDDDGAAAAAJHJKMOMKJIIIIIISJQNJJJJJJPNLJJGJJJJJGRJJRIIIGJJJNGCRJJRMKJGJIGAJGSDDDDDDJJJJJJGJJJJJFDJJJNQJJJJFDFJJJJFDDDDSABDEIS"
-	local pixs = {}
-	local totalsize = 0
-	for i=0, 6 do
-		local row = {}
-		for j=1, text:len() do
-			local c = text:byte(j, j)
-			local w = 0
-			if c ~= 0x20 then
-				local k = (c - 33) * 7 + i
-				w = lt:byte(k + 1, k + 1)
-				if w ~= nil and w > 64 then
-					w = ls:byte(w - 64, w - 64) - 65
-				else
-					w = 0
-				end
-			end
-			for k=0, 5 do
-				local h = (j - 1) * 6 + (4 - k)
-				totalsize = math.max(totalsize, h + 1)
-				local p = (w // math.pow(2, k)) % 2
-				if p > 0 then
-					row[h] = true
-				end
-			end
-		end
-		pixs[i] = row
-	end
-	local pivot = Util.Instance("Frame")
-	pivot.AnchorPoint = Vector2.new(0.5, 0.5)
-	pivot.Position = UDim2.new(0.5, 0, 0.5, 0)
-	pivot.Size = UDim2.new(0, totalsize, 0, 7)
-	pivot.BackgroundTransparency = 1
-	pivot.BorderSizePixel = 0
-	for i=0, 6 do
-		local row = pixs[i]
-		local olde = nil
-		local olds = 0
-		for j=0, totalsize - 1 do
-			local pix = row[j]
-			if pix == true then
-				if olde ~= nil then
-					olds += 1
-					olde.Size = UDim2.new(olds / totalsize, 0, 1 / 7, 0)
-				else
-					olde = Util.Instance("Frame", pivot)
-					olde.AnchorPoint = Vector2.new(0, 0)
-					olde.Position = UDim2.new(j / totalsize, 0, i / 7, 0)
-					olde.Size = UDim2.new(1 / totalsize, 0, 1 / 7, 0)
-					olde.BackgroundTransparency = 1
-					olde.BorderSizePixel = 0
-					olds = 1
-				end
-			else
-				olde = nil
-				olds = 0
-			end
-		end
-	end
-	return pivot
-end
-Util.SetTextColor = function(text, color, tran)
-	for _,v in text:GetChildren() do
-		v.BackgroundColor3 = color
-		v.BackgroundTransparency = tran
-	end
-end
-
 local UISound = {}
 
 UISound.Music = Util.Instance("Sound", UIMainFrame)
@@ -747,172 +622,9 @@ UISound.Music.Ended:Connect(function()
 	MusicPlayer.PlayMusic()
 end)
 
--- AnathemaFE starts directly in the workspace; retain the legacy key for compatibility.
+-- AnathemaFE starts directly in the workspace; the legacy intro renderer is removed.
 SaveData.SkipIntro = true
-if SaveData.SkipIntro then
-	MusicPlayer.PlayMusic()
-else
-	UISound.Music.Volume = 0
-	MusicPlayer.PlayMusic(1)
-	repeat RunService.RenderStepped:Wait() until UISound.Music.IsLoaded
-	UISound.Music:Stop()
-	task.wait()
-	UISound.Music:Play()
-	UISound.Music.Volume = 1
-	UISound.Music.TimePosition = 0
-	local scrolltexts = {
-		"stevetherealone presents a script                                 ",
-		"hi guys welcome to my game                                        ",
-		"holy shit where did our friends go?               *gets vc warned*",
-		"greetings to qpmbsjbvt for getting me into reanimation            ",
-		"those who know the place called ajman, dubai, uae                 ",
-		":3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 >:3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3 :3",
-		"quick intro        with quick scrolltext         and you will miss the punchline              punchline                did you get the punchline?  ",
-		"meeeooowwwwwwwwww >:3                                          maw",
-		"wwwwwwwwwwwwwwwwwww                         grass                 ",
-		"erika's the towers                            sfoth iv update when",
-		"i will leak all ur script i will leak all ur script i will leak al",
-		"fflags are dead lol                                               ",
-		"imagine being called a dummy                                      ",
-		"hi                          ...                oxide more like sui",
-		"even if I mope, nothing good will happen! if i worked hard today, today will be perfecto!",
-		"hi                          ...                                   ",
-		"who the fuck even reads this??                     hi guys        ",
-		"          trust me the ui looks good             here it comes    ",
-		"dying is scary, but living is difficult                               dying: gifted scary; living: pure difficult",
-		"but i halter my forethought, i keep on running like a chicken with his dih",
-		"kaiya sounds like a perfect name for a genshin impact character   ",
-		"this is an intro lol                        ",
-		"greetings to myworld for helping with -net less                   ",
-		"Omega-Skidded Immortality Lord Diddy Blud On The Calculator       ",
-		"all UI music credits to dubmood, zabutom, ogge, 4mat and hoster   ",
-		"heres the triforce                and heres my name                              ",
-		"skids are now taking credit of this entire script, meaning its so good           ",
-		"skids, be alert, go to weao.xyz for your roblox hacks!            ",
-		"                                             ok.                         ",
-		"hey steve why is this better than genesis fe?                     ",
-		"RCDless is the future of roblox exploiting                        ",
-	}
-	scrolltexts = scrolltexts[math.random(1, #scrolltexts)]
-	local fade = TweenService:Create(UIMainFrame, TweenInfo.new(5), {BackgroundTransparency = 0.5})
-	fade:Play()
-	local scrolltext = Util.MakeText(scrolltexts)
-	scrolltext.Parent = UIMainFrame
-	scrolltext.ZIndex = 0
-	scrolltext.AnchorPoint = Vector2.new(0, 0.5)
-	scrolltext.Position = UDim2.new(1.5, 0, 0.5, 0)
-	Util.SetTextColor(scrolltext, Color3.new(1, 1, 1), 0.6)
-	TweenService:Create(scrolltext, TweenInfo.new(5.256, Enum.EasingStyle.Linear), {
-		Position = UDim2.new(1, 0, 0.5, 0),
-		AnchorPoint = Vector2.new(1, 0.5),
-	}):Play()
-	local scrolltextratio = scrolltext.Size.X.Offset / scrolltext.Size.Y.Offset
-	local Triforce1 = Util.MakeTriforce(3, Color3.new(1, 0.7, 0), 4)
-	local Triforce2 = Util.MakeTriforce(3, Color3.new(0.8, 0.4, 0), 4)
-	Triforce1.ZIndex = 2
-	Triforce2.ZIndex = 1
-	Triforce1.Parent = UIMainFrame
-	Triforce2.Parent = UIMainFrame
-	local TRI_offset = 0.01
-	local TRI_height = 0.5
-	local TRI_rot = 0
-	local TRI_rotvel = 720
-	local TRI_scale = 0
-	local stevetherealone = Util.Instance("TextLabel", UIMainFrame)
-	stevetherealone.TextScaled = true
-	stevetherealone.Font = Enum.Font.Arcade
-	stevetherealone.TextColor3 = Color3.new(1, 1, 1)
-	stevetherealone.BackgroundColor3 = Color3.new(0, 0, 0)
-	stevetherealone.BackgroundTransparency = 0
-	stevetherealone.BorderColor3 = Color3.new(1, 1, 1)
-	stevetherealone.BorderSizePixel = 8
-	stevetherealone.AnchorPoint = Vector2.new(0.5, 0.5)
-	stevetherealone.Position = UDim2.new(0.5, 0, 0.5, 0)
-	stevetherealone.Size = UDim2.new(0, 0, 0, 0)
-	stevetherealone.Visible = false
-	stevetherealone.ZIndex = 3
-	local stevetherealone_padding = Util.Instance("UIPadding", stevetherealone)
-	stevetherealone_padding.PaddingLeft = UDim.new(0, 10)
-	stevetherealone_padding.PaddingRight = UDim.new(0, 10)
-	stevetherealone_padding.PaddingTop = UDim.new(0, 10)
-	stevetherealone_padding.PaddingBottom = UDim.new(0, 10)
-	while true do
-		local dt = RunService.Heartbeat:Wait()
-		local t = UISound.Music.TimePosition
-		if t >= 5.256 then break end
-		local screensize = Util.GetScreenSize()
-		local ysize = screensize.Y
-		local height = ysize / 3
-		scrolltext.Size = UDim2.fromOffset(height * scrolltextratio * 0.5, height)
-		TRI_rot = (TRI_rot + TRI_rotvel * dt) % 360
-		TRI_rotvel *= math.exp(-0.25 * dt)
-		Triforce1.Size = UDim2.fromOffset(TRI_scale * ysize * 0.8, TRI_scale * ysize * 0.8)
-		if t >= 4.256 then
-			local a = t - 4.256
-			Triforce1.Size = Triforce1.Size:Lerp(UDim2.fromOffset(160, 160), a)
-			TRI_height = 0.5 + (15 / ysize) * a
-		end
-		Triforce2.Size = Triforce1.Size
-		Triforce1.Position = UDim2.new(0.5, ysize * -TRI_offset, TRI_height, ysize * -TRI_offset)
-		Triforce2.Position = UDim2.new(0.5, 0, TRI_height, 0)
-		Triforce1.Rotation = TRI_rot
-		Triforce2.Rotation = TRI_rot
-		if t < 4.256 then
-			TRI_scale = 1 - ((1 - math.min(1, t / 3)) ^ 2)
-		else
-			local a = t - 4.256
-			TRI_scale = 1 + a * 13
-			if a > 0.5 then
-				Triforce1.ZIndex = 5
-				Triforce2.ZIndex = 4
-			else
-				Triforce1.ZIndex = 2
-				Triforce2.ZIndex = 1
-			end
-		end
-		if t < 2.152 then
-			stevetherealone.Text = ""
-			stevetherealone.Visible = false
-		elseif t < 2.652 then
-			local a = (t - 2.152) / 0.5
-			local z = 20 * ((a * 100) // 20)
-			stevetherealone.Text = ""
-			stevetherealone.Visible = true
-			stevetherealone.Size = UDim2.fromOffset(z, z)
-		elseif t < 4.756 then
-			stevetherealone.Text = "STEVE\nTHERE\nALONE"
-			stevetherealone.Visible = true
-			stevetherealone.Size = UDim2.fromOffset(100, 100)
-		else
-			local a = (t - 4.756) / 0.5
-			local x = 20 * ((a * 260 + 100) // 20)
-			local y = 20 * ((math.min(1, a / 0.538) * 140 + 100) // 20)
-			stevetherealone.Text = ""
-			stevetherealone.Visible = true
-			stevetherealone.Size = UDim2.fromOffset(x, y)
-			stevetherealone.Position = UDim2.new(0.5, 0, 0.5, 0)
-		end
-	end
-	stevetherealone:Destroy()
-	Triforce1:Destroy()
-	Triforce2:Destroy()
-	scrolltext:Destroy()
-	fade:Cancel()
-	UIMainFrame.BackgroundTransparency = 1
-	local flash = Util.Instance("Frame", UIMainFrame)
-	flash.AnchorPoint = Vector2.new(0, 0)
-	flash.Position = UDim2.new(0, 0, 0, 0)
-	flash.Size = UDim2.new(1, 0, 1, 0)
-	flash.BackgroundColor3 = Color3.new(1, 1, 1)
-	flash.BackgroundTransparency = 0
-	flash.BorderSizePixel = 0
-	flash.Interactable = false
-	flash.ZIndex = 256
-	TweenService:Create(flash, TweenInfo.new(1), {
-		BackgroundTransparency = 1
-	}):Play()
-	Debris:AddItem(flash, 1)
-end
+MusicPlayer.PlayMusic()
 
 SaveData.MuteUIMusic = not not SaveData.MuteUIMusic
 SaveData.MuteReanimMusic = not not SaveData.MuteReanimMusic
@@ -939,51 +651,16 @@ end
 local StylizedObjs = {}
 local function Stylize(obj, options)
 	options = options or {}
-	Util.Instance("UICorner", obj).CornerRadius = UDim.new(0, 5)
-	local Out = Util.Instance("UIStroke", obj)
+	local corner = obj:FindFirstChildOfClass("UICorner") or Util.Instance("UICorner", obj)
+	corner.CornerRadius = UDim.new(0, options.Round or 8)
+	local Out = obj:FindFirstChildOfClass("UIStroke") or Util.Instance("UIStroke", obj)
 	Out.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	Out.Color = Color3.new(1, 1, 1)
+	Out.Color = Color3.fromRGB(82, 86, 130)
 	Out.LineJoinMode = Enum.LineJoinMode.Round
 	Out.Thickness = 1
-	Out.Transparency = 0
+	Out.Transparency = 0.35
 	Out.Enabled = true
-	obj.BackgroundColor3 = Color3.new(0, 0, 0)
-	local Glos = {}
-	if options.Glow == true then
-		local GloF = Util.Instance("Frame", UIMainFrame)
-		Util.LinkDestroyI2I(obj, GloF)
-		GloF.Interactable = false
-		GloF.BackgroundTransparency = 1
-		local function update()
-			GloF.AnchorPoint = obj.AnchorPoint
-			GloF.Position = obj.Position - Util.Vector2ToUDim2Offset((obj.AnchorPoint * 2 - Vector2.one) * 5)
-			GloF.Size = obj.Size - UDim2.fromOffset(10, 10)
-			GloF.Visible = obj.Visible
-			GloF.ZIndex = obj.ZIndex - 2
-		end
-		update()
-		obj.Changed:Connect(update)
-		local tex = Util.GetCDNAsset("lightinursoul.graphic.png")
-		for x=0, 2 do
-			for y=0, 2 do
-				local Glo = Util.Instance("ImageLabel", GloF)
-				Glo.AnchorPoint = Vector2.new(1 - math.min(x, 1), 1 - math.min(y, 1))
-				Glo.Position = UDim2.fromScale(math.max(x - 1, 0), math.max(y - 1, 0))
-				Glo.Size = UDim2.new(1 - math.abs(x - 1), x == 1 and 0 or 32, 1 - math.abs(y - 1), y == 1 and 0 or 32)
-				Glo.BackgroundTransparency = 1
-				Glo.Image = tex
-				Glo.ImageRectOffset = Vector2.new(math.min(x, 1) * 256, math.min(y, 1) * 256)
-				Glo.ImageRectSize = Vector2.new(x == 1 and 0 or 256, y == 1 and 0 or 256)
-				table.insert(Glos, Glo)
-			end
-		end
-	end
-	table.insert(StylizedObjs, {
-		obj = obj,
-		Out = Out,
-		Glos = Glos,
-		options = options,
-	})
+	table.insert(StylizedObjs, {obj = obj, Out = Out, Glos = {}, options = options})
 end
 local ForceUIColor = nil
 local ForceUIBGColor = nil
@@ -1147,349 +824,156 @@ end
 SaveData.UITheme = SaveData.UITheme or 1
 SetUITheme(SaveData.UITheme)
 
-local CracktroFrameText = "Uhhhhhh Reanimate V" .. UhhhhhhVersion
-local UIMainWindow, WindowContent do
-	UIMainWindow = Util.Instance("Frame", UIMainFrame)
-	UIMainWindow.Active = true
-	UIMainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
-	UIMainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	UIMainWindow.Size = UDim2.new(0, 760, 0, 500)
-	UIMainWindow.BackgroundTransparency = 0
-	UIMainWindow.BackgroundColor3 = Color3.new(1, 1, 1)
-	UIMainWindow.BorderSizePixel = 0
-	Stylize(UIMainWindow, {
-		Glow = true
-	})
-	local _clicksndclicked = false
-	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			_clicksndclicked = false
-		end
-	end)
-	local function _registerclicksnd(v)
-		if v:GetAttribute("ClickSnd") then return end
-		v:SetAttribute("ClickSnd", true)
-		v.InputBegan:Connect(function(input)
-			if _clicksndclicked then return end
-			if input.UserInputState ~= Enum.UserInputState.Begin then return end
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				UISound.Click:Play()
-				_clicksndclicked = true
-			end
-		end)
-	end
-	_registerclicksnd(UIMainWindow)
-	UIMainWindow.DescendantAdded:Connect(function(v)
-		if v:IsA("GuiObject") then
-			_registerclicksnd(v)
-		end
-	end)
-	
-	local TopBarFrame = Util.Instance("Frame", UIMainWindow)
-	TopBarFrame.Position = UDim2.new(0, 0, 0, 0)
-	TopBarFrame.Size = UDim2.new(1, 0, 0, 30)
-	TopBarFrame.BackgroundTransparency = 0
-	TopBarFrame.BackgroundColor3 = Color3.new(1, 1, 1)
-	TopBarFrame.BorderSizePixel = 0
-	TopBarFrame.ClipsDescendants = true
-	TopBarFrame.ZIndex = 1
-	Stylize(TopBarFrame)
-	
-	local TopBarText = Util.Instance("TextLabel", TopBarFrame)
-	TopBarText.AnchorPoint = Vector2.new(0, 0.5)
-	TopBarText.Position = UDim2.new(0, 8, 0.5, 0)
-	TopBarText.Size = UDim2.new(1, -35, 1, 0)
-	TopBarText.BackgroundTransparency = 1
-	TopBarText.ClipsDescendants = true
-	TopBarText.Font = Enum.Font.Code
-	TopBarText.TextColor3 = Color3.new(1, 1, 1)
-	TopBarText.TextSize = 20
-	TopBarText.TextXAlignment = Enum.TextXAlignment.Left
-	TopBarText.Text = "AnathemaFE // Universal Reanimate | v" .. UhhhhhhVersion
-	TopBarText.RichText = true
-	RegisterTextLabel(TopBarText)
-	Util.ForceTextSize(TopBarText)
-	-- Legacy Tux/cracktro quotes are intentionally disabled by AnathemaFE.
-	if false then
-		local quotes = {
-			"Ohhhhhh Re-create | v" .. UhhhhhhVersion,
-			"jumpscare",
-			"you'll never see it coming",
-			Player.Name .. "'s Uhhhhhh Session",
-			"genesis hat collide releaser admin gui",
-			"Delta Executor",
-			"optimise the optimised",
-			":troll:",
-			"solara executor",
-			"wait a minute smth aint right",
-			"gta6 releaser",
-			"HD Admin",
-			"The Return Of STEVE's Roserika",
-			"HI",
-			"<font color=\"#00DDFF\">Oxide</font> Version 67",
-			"currentangle v5",
-			"patchma hub by <font color=\"#0000FF\">MyWorld</font>",
-			"Genesis FE with extra steps",
-			"Gugu Gaga",
-			"Half Life 3 Releaser",
-			"hatdrop hub",
-			"uhhhh hub",
-			"Emperyan Reanimate",
-			"<font color=\"#0000FF\">IM BLUE BADA DEE BADA DIE</font>",
-			"Delta Reanimate | v" .. UhhhhhhVersion,
-		}
-		if os.date("%m") == "12" and math.random(4) == 1 then
-			quotes = {
-				"ho ho ho",
-				"dess from deltarune",
-				"jesus christmas",
-				"Happy Xmas, " .. Player.Name,
-				"Razor1911 says... SOCIALIZE!",
-				"UHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
-				"its cold outside get in here",
-				"christmas tree builder",
-				"UHHHH]",
-			}
-		end
-		if os.date("%m") == "01" and math.random(4) == 1 then
-			quotes = {
-				"new year new me",
-				"HAVE A HAPPY NEW YEAR",
-				"A NEW YEAR??",
-				"New Years, " .. Player.Name,
-				"did u explode yet?",
-				"KEEP YER KIDS SAFE FROM FIREWORK",
-				"kaboom? yes rico, kaboom.",
-			}
-		end
-		local aprilfools = os.date("%m") == "04 01"
-		if aprilfools then
-			local troll = math.random(3)
-			if troll == 1 then
-				CracktroFrameText = "Oxide Reanimation V67"
-				quotes = {"<font color=\"#00DDFF\">Oxide</font>   Reanimation"}
-				SetUITheme(3)
-			end
-			if troll == 2 then
-				CracktroFrameText = "patchma hub V67"
-				quotes = {"<font color=\"#0000FF\">patchma hub</font> by MyWorld"}
-				SetUITheme(4)
-			end
-			if troll == 3 then
-				CracktroFrameText = "Genesis V4 but better"
-				quotes = {"<font color=\"#CC11FF\">Genesis V4 - Neptunian V</font>"}
-				SetUITheme(5)
-			end
-		end
-		TopBarText.Text = quotes[math.random(1, #quotes)]
-		if not aprilfools then
-			task.delay(2, function()
-				TopBarText.Text = "AnathemaFE // Universal Reanimate | v" .. UhhhhhhVersion
-			end)
-		end
-	end
-	
-	local TopBarClose = Util.Instance("TextButton", TopBarFrame)
-	TopBarClose.AnchorPoint = Vector2.new(1, 0)
-	TopBarClose.Position = UDim2.new(1, 0, 0, 0)
-	TopBarClose.Size = UDim2.new(0, 30, 1, 0)
-	TopBarClose.BackgroundTransparency = 1
-	TopBarClose.Text = ""
-	do
-		local A = Util.Instance("Frame", TopBarClose)
-		A.AnchorPoint = Vector2.new(0.5, 0.5)
-		A.Position = UDim2.new(0.5, 0, 0.5, 0)
-		A.Size = UDim2.new(0, 16, 0, 2)
-		A.Rotation = 0
-		A.BackgroundTransparency = 0
-		A.BackgroundColor3 = UITextColor.Value
-		A.BorderSizePixel = 0
-		A.Name = "A"
-		A = Util.Instance("Frame", A)
-		A.AnchorPoint = Vector2.new(0.5, 0.5)
-		A.Position = UDim2.new(0.5, 0, 0.5, 0)
-		A.Size = UDim2.new(0, 2, 0, 0)
-		A.Rotation = 0
-		A.BackgroundTransparency = 0
-		A.BackgroundColor3 = UITextColor.Value
-		A.BorderSizePixel = 0
-		A.Name = "B"
-		UITextColor.Changed:Connect(function(val)
-			TopBarClose.A.BackgroundColor3 = val
-			TopBarClose.A.B.BackgroundColor3 = val
-		end)
-	end
-	
-	WindowContent = Util.Instance("Frame", UIMainWindow)
-	WindowContent.Position = UDim2.new(0, 0, 0, 30)
-	WindowContent.Size = UDim2.new(1, 0, 1, -35)
-	WindowContent.BackgroundTransparency = 1
-	WindowContent.ClipsDescendants = true
-	WindowContent.ZIndex = 0
-
--- AnathemaFE modern UI skin adapter. Uhhhhhh owns the feature surface;
--- this layer modernizes the visual primitives without replacing its modules.
-local AnathemaAccent = Color3.fromRGB(126, 92, 255)
-local AnathemaPanel = Color3.fromRGB(22, 24, 38)
-local AnathemaScale = Instance.new("UIScale")
-AnathemaScale.Name = "AnathemaResponsiveScale"
-AnathemaScale.Parent = UIMainWindow
+local UIMainWindow, WindowContent
+local AnathemaTopBarText
+local TopBarFrame, TopBarClose
+local AnathemaRootSize = UDim2.fromOffset(900, 580)
+UIMainWindow = Util.Instance("Frame", UIMainFrame)
+UIMainWindow.Name = "AnathemaRoot"
+UIMainWindow.Active = true
+UIMainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
+UIMainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
+UIMainWindow.Size = AnathemaRootSize
+UIMainWindow.BackgroundColor3 = Color3.fromRGB(15, 17, 29)
+UIMainWindow.BackgroundTransparency = 0
+UIMainWindow.BorderSizePixel = 0
+UIMainWindow.ClipsDescendants = true
+UIMainWindow.ZIndex = 10
+local AnathemaRootCorner = Instance.new("UICorner", UIMainWindow)
+AnathemaRootCorner.CornerRadius = UDim.new(0, 14)
+local AnathemaRootStroke = Instance.new("UIStroke", UIMainWindow)
+AnathemaRootStroke.Color = Color3.fromRGB(112, 92, 220)
+AnathemaRootStroke.Transparency = 0.3
+AnathemaRootStroke.Thickness = 1
+local AnathemaRootGradient = Instance.new("UIGradient", UIMainWindow)
+AnathemaRootGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(19, 21, 36)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 12, 22)),
+})
+AnathemaRootGradient.Rotation = 90
+local AnathemaScale = Instance.new("UIScale", UIMainWindow)
+AnathemaScale.Name = "ResponsiveScale"
+AnathemaScale.Scale = 1
 local function AnathemaUpdateScale()
-    local viewport = Util.GetScreenSize()
-    AnathemaScale.Scale = math.clamp(math.min(viewport.X / 720, viewport.Y / 480), 0.75, 1.35)
+	local viewport = Util.GetScreenSize()
+	AnathemaScale.Scale = math.clamp(math.min(viewport.X / 980, viewport.Y / 650), 0.35, 1)
 end
 AnathemaUpdateScale()
-if Camera then
-    Camera:GetPropertyChangedSignal("ViewportSize"):Connect(AnathemaUpdateScale)
-end
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
-    task.defer(function()
-        if workspace.CurrentCamera then
-            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(AnathemaUpdateScale)
-        end
-        AnathemaUpdateScale()
-    end)
+UIMainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(AnathemaUpdateScale)
+local _clicksndclicked = false
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		_clicksndclicked = false
+	end
 end)
-local AnathemaGradient = Instance.new("UIGradient")
-AnathemaGradient.Name = "AnathemaWindowGradient"
-AnathemaGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 30, 58)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 14, 24)),
-})
-AnathemaGradient.Rotation = 90
-AnathemaGradient.Transparency = NumberSequence.new(0.18)
-AnathemaGradient.Parent = UIMainWindow
-local function AnathemaModernize(obj)
-    task.defer(function()
-        if not obj or not obj.Parent then return end
-        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-            obj.Font = Enum.Font.Gotham
-        end
-        if obj:IsA("TextButton") then
-            obj.AutoButtonColor = false
-        end
-        if obj:IsA("GuiObject") and obj.BackgroundTransparency < 1 then
-            if obj.BackgroundColor3 == Color3.new(0, 0, 0) then
-                obj.BackgroundColor3 = AnathemaPanel
-            end
-            if not obj:FindFirstChild("AnathemaCorner") then
-                local corner = Instance.new("UICorner")
-                corner.Name = "AnathemaCorner"
-                corner.CornerRadius = UDim.new(0, 8)
-                corner.Parent = obj
-            end
-            if (obj:IsA("TextButton") or obj:IsA("TextBox") or obj:IsA("ScrollingFrame"))
-                and not obj:FindFirstChild("AnathemaStroke") then
-                local stroke = Instance.new("UIStroke")
-                stroke.Name = "AnathemaStroke"
-                stroke.Color = AnathemaAccent
-                stroke.Thickness = 1
-                stroke.Transparency = 0.72
-                stroke.Parent = obj
-            end
-        end
-    end)
-end
-for _, obj in SCREENGUI:GetDescendants() do
-    AnathemaModernize(obj)
-end
-SCREENGUI.DescendantAdded:Connect(AnathemaModernize)
-	
-	local MainWindowClosed = false
-	local MainWindowTweening = false
-	local MainWindowPosOpen = nil
-	local MainWindowPosClose = nil
-	if SaveData.WindowClosedPosition then
-		MainWindowPosClose = UDim2.new(unpack(SaveData.WindowClosedPosition))
-	end
-	if MainWindowPosClose and (MainWindowPosClose.X.Scale < 0 or MainWindowPosClose.X.Scale > 1) then
-		MainWindowPosClose = nil
-	end
-	if MainWindowPosClose and (MainWindowPosClose.Y.Scale < 0 or MainWindowPosClose.Y.Scale > 1) then
-		MainWindowPosClose = nil
-	end
-	TopBarClose.Activated:Connect(function()
-		if MainWindowTweening then return end
-		MainWindowTweening = true
-		MainWindowClosed = not MainWindowClosed
-		if MainWindowClosed then
-			MainWindowPosOpen = UIMainWindow.Position
-			TweenService:Create(UIMainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-				Position = MainWindowPosClose,
-				Size = UDim2.fromOffset(112, 30)
-			}):Play()
-			TweenService:Create(TopBarClose.A, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-				Rotation = 180
-			}):Play()
-			TweenService:Create(TopBarClose.A.B, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, 2, 0, 16)
-			}):Play()
-			task.delay(0.6, function()
-				WindowContent.Visible = false
-				MainWindowTweening = false
-			end)
-		else
-			WindowContent.Visible = true
-			MainWindowPosClose = UIMainWindow.Position
-			SaveData.WindowClosedPosition = {MainWindowPosClose.X.Scale, MainWindowPosClose.X.Offset, MainWindowPosClose.Y.Scale, MainWindowPosClose.Y.Offset}
-			TweenService:Create(UIMainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-				Position = MainWindowPosOpen,
-				Size = UDim2.fromOffset(360, 240)
-			}):Play()
-			TweenService:Create(TopBarClose.A, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-				Rotation = 0
-			}):Play()
-			TweenService:Create(TopBarClose.A.B, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, 2, 0, 0)
-			}):Play()
-			task.delay(0.6, function()
-				MainWindowTweening = false
-			end)
-		end
-		WindowContent.Active = not MainWindowClosed
-		WindowContent.Interactable = not MainWindowClosed
-	end)
-	
-	local dragref = nil
-	local offset = Vector2.new(0, 0)
-	TopBarFrame.InputBegan:Connect(function(input)
-		if dragref then return end
-		if input.UserInputState ~= Enum.UserInputState.Begin then return end
+local function AnathemaRegisterClickSound(v)
+	if not v:IsA("GuiButton") or v:GetAttribute("AnathemaClickSound") then return end
+	v:SetAttribute("AnathemaClickSound", true)
+	v.InputBegan:Connect(function(input)
+		if _clicksndclicked or input.UserInputState ~= Enum.UserInputState.Begin then return end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			WindowContent.Interactable = false
-			local screen = Util.GetScreenSize()
-			local ch = (Vector2.new(input.Position.X, input.Position.Y) + SCREENGUI.AbsolutePosition) / screen
-			offset = Util.UDim2ToVector2Scale(UIMainWindow.Position) - ch
-			dragref = input
-		end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragref then
-			if input.UserInputType == Enum.UserInputType.MouseMovement or (input.UserInputType == Enum.UserInputType.Touch and dragref == input) then
-				local screen = Util.GetScreenSize()
-				local ch = (Vector2.new(input.Position.X, input.Position.Y) + SCREENGUI.AbsolutePosition) / screen
-				local pos = ch + offset
-				local dowsize = Util.UDim2ToVector2Offset(UIMainWindow.Size)
-				local imjollx = (dowsize.X * 0.5 - 100) / screen.X
-				local imjolly = dowsize.Y * -0.5 / screen.Y
-				local boxy = 31 / screen.Y
-				pos = Vector2.new(
-					math.clamp(pos.X, -imjollx, 1 + imjollx),
-					math.clamp(pos.Y, -imjolly, 1 - imjolly - boxy)
-				)
-				UIMainWindow.Position = Util.Vector2ToUDim2Scale(pos)
-			end
-		end
-	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if dragref and dragref == input then
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				WindowContent.Interactable = true
-				dragref = nil
-			end
+			UISound.Click:Play()
+			_clicksndclicked = true
 		end
 	end)
 end
+UIMainWindow.DescendantAdded:Connect(AnathemaRegisterClickSound)
+TopBarFrame = Util.Instance("Frame", UIMainWindow)
+TopBarFrame.Name = "AnathemaTopBar"
+TopBarFrame.Position = UDim2.fromOffset(0, 0)
+TopBarFrame.Size = UDim2.new(1, 0, 0, 52)
+TopBarFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 45)
+TopBarFrame.BackgroundTransparency = 0
+TopBarFrame.BorderSizePixel = 0
+TopBarFrame.ZIndex = 20
+local TopBarAccent = Instance.new("Frame", TopBarFrame)
+TopBarAccent.Position = UDim2.new(0, 18, 1, -2)
+TopBarAccent.Size = UDim2.new(1, -36, 0, 2)
+TopBarAccent.BackgroundColor3 = Color3.fromRGB(126, 92, 255)
+TopBarAccent.BorderSizePixel = 0
+AnathemaTopBarText = Util.Instance("TextLabel", TopBarFrame)
+AnathemaTopBarText.Name = "Title"
+AnathemaTopBarText.Position = UDim2.fromOffset(20, 7)
+AnathemaTopBarText.Size = UDim2.new(1, -88, 0, 22)
+AnathemaTopBarText.BackgroundTransparency = 1
+AnathemaTopBarText.Font = Enum.Font.GothamBold
+AnathemaTopBarText.TextColor3 = Color3.fromRGB(245, 246, 255)
+AnathemaTopBarText.TextSize = 16
+AnathemaTopBarText.TextXAlignment = Enum.TextXAlignment.Left
+AnathemaTopBarText.Text = "AnathemaFE // Universal Reanimate"
+AnathemaTopBarText.ZIndex = 21
+local TopBarSubtext = Util.Instance("TextLabel", TopBarFrame)
+TopBarSubtext.Position = UDim2.fromOffset(20, 29)
+TopBarSubtext.Size = UDim2.new(1, -88, 0, 16)
+TopBarSubtext.BackgroundTransparency = 1
+TopBarSubtext.Font = Enum.Font.Gotham
+TopBarSubtext.TextColor3 = Color3.fromRGB(146, 151, 180)
+TopBarSubtext.TextSize = 10
+TopBarSubtext.TextXAlignment = Enum.TextXAlignment.Left
+TopBarSubtext.Text = "Independent control surface  /  v" .. UhhhhhhVersion
+TopBarSubtext.ZIndex = 21
+TopBarClose = Util.Instance("TextButton", TopBarFrame)
+TopBarClose.Name = "CloseToggle"
+TopBarClose.AnchorPoint = Vector2.new(1, 0.5)
+TopBarClose.Position = UDim2.new(1, -16, 0.5, 0)
+TopBarClose.Size = UDim2.fromOffset(30, 30)
+TopBarClose.BackgroundColor3 = Color3.fromRGB(39, 42, 68)
+TopBarClose.BackgroundTransparency = 0
+TopBarClose.BorderSizePixel = 0
+TopBarClose.AutoButtonColor = false
+TopBarClose.Text = "−"
+TopBarClose.TextColor3 = Color3.fromRGB(235, 238, 255)
+TopBarClose.Font = Enum.Font.GothamBold
+TopBarClose.TextSize = 18
+TopBarClose.ZIndex = 22
+local TopBarCloseCorner = Instance.new("UICorner", TopBarClose)
+TopBarCloseCorner.CornerRadius = UDim.new(0, 8)
+TopBarClose.MouseEnter:Connect(function() TopBarClose.BackgroundColor3 = Color3.fromRGB(83, 63, 145) end)
+TopBarClose.MouseLeave:Connect(function() TopBarClose.BackgroundColor3 = Color3.fromRGB(39, 42, 68) end)
+WindowContent = Util.Instance("Frame", UIMainWindow)
+WindowContent.Name = "AnathemaWorkspace"
+WindowContent.Position = UDim2.fromOffset(0, 52)
+WindowContent.Size = UDim2.new(1, 0, 1, -52)
+WindowContent.BackgroundTransparency = 1
+WindowContent.ClipsDescendants = false
+WindowContent.ZIndex = 11
+local MainWindowClosed = false
+TopBarClose.Activated:Connect(function()
+	MainWindowClosed = not MainWindowClosed
+	if MainWindowClosed then
+		WindowContent.Visible = false
+		UIMainWindow.Size = UDim2.fromOffset(900, 52)
+		TopBarClose.Text = "+"
+	else
+		UIMainWindow.Size = AnathemaRootSize
+		WindowContent.Visible = true
+		TopBarClose.Text = "−"
+	end
+end)
+local dragref = nil
+local dragstart = nil
+local dragpos = nil
+TopBarFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragref = input
+		dragstart = input.Position
+		dragpos = UIMainWindow.Position
+	end
+end)
+TopBarFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragref = input
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragref and input == dragref then
+		local delta = input.Position - dragstart
+		UIMainWindow.Position = UDim2.new(dragpos.X.Scale, dragpos.X.Offset + delta.X, dragpos.Y.Scale, dragpos.Y.Offset + delta.Y)
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input == dragref then dragref = nil end
+end)
 
 local _funcrefreshes = {}
 local function AddToRenderStep(func, linkto)
@@ -1532,10 +1016,10 @@ do
 	UINotifyFrame.Position = UDim2.new(0.5, 0, 1, 10)
 	UINotifyFrame.Size = UDim2.new(0, 300, 0, 30)
 	UINotifyFrame.BackgroundTransparency = 0
-	UINotifyFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+	UINotifyFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 45)
 	UINotifyFrame.BorderSizePixel = 0
 	UINotifyFrame.Visible = false
-	UINotifyFrame.ZIndex = -1
+	UINotifyFrame.ZIndex = 200
 	Stylize(UINotifyFrame, {
 		Glow = true,
 	})
@@ -1566,8 +1050,8 @@ do
 	NotifyText.Size = UDim2.new(1, 0, 0, 20)
 	NotifyText.BackgroundTransparency = 1
 	NotifyText.ClipsDescendants = true
-	NotifyText.Font = Enum.Font.Code
-	NotifyText.TextColor3 = Color3.new(1, 1, 1)
+	NotifyText.Font = Enum.Font.Gotham
+	NotifyText.TextColor3 = Color3.fromRGB(220, 223, 240)
 	NotifyText.TextSize = 18
 	NotifyText.TextXAlignment = Enum.TextXAlignment.Center
 	NotifyText.Text = ""
@@ -1580,7 +1064,7 @@ do
 		end
 		if uinotif.Animation < 1 then
 			UINotifyFrame.Visible = true
-			UINotifyFrame.Position = UIMainWindow.Position + UDim2.new(0, 0, 0, UIMainWindow.Size.Y.Offset / 2 + 10 + math.pow(uinotif.Animation, 3) * -40)
+			UINotifyFrame.Position = UDim2.new(0.5, 0, 1, -44 + math.floor(math.pow(uinotif.Animation, 3) * -40))
 			if uinotif.Progress >= 1 then
 				Progress.BackgroundTransparency = math.min(t - uinotif.LastNotif, 0.5) * 2 * 0.3 + 0.7
 			else
@@ -1609,283 +1093,6 @@ do
 		end
 	end, UINotifyFrame)
 end
-
-local CracktroFrame = Util.Instance("Frame", WindowContent)
-CracktroFrame.Active = true
-CracktroFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-CracktroFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-CracktroFrame.Size = UDim2.new(0, 360, 0, 205)
-CracktroFrame.BackgroundTransparency = 0
-CracktroFrame.BackgroundColor3 = Color3.new(0, 0, 0)
-CracktroFrame.BorderSizePixel = 1
-CracktroFrame.BorderColor3 = Color3.new(1, 1, 1)
-CracktroFrame.ZIndex = 10
-CracktroFrame.ClipsDescendants = true
-AddToRenderStep(function(t)
-	CracktroFrame.BorderColor3 = GetUIColor(t)
-	CracktroFrame.BackgroundColor3 = GetUIBGColor(t)
-end, CracktroFrame)
-
-do -- homepage
-	local TriforceClip = Util.Instance("CanvasGroup", CracktroFrame)
-	TriforceClip.Position = UDim2.new(0, 0, 0, 0)
-	TriforceClip.Size = UDim2.new(1, 0, 1, 0)
-	TriforceClip.BackgroundTransparency = 1
-	TriforceClip.ZIndex = 0
-
-	local Glowy = Util.Instance("ImageLabel", CracktroFrame)
-	Glowy.AnchorPoint = Vector2.new(0.5, 0.5)
-	Glowy.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Glowy.Size = UDim2.new(0, 260, 0, 260)
-	Glowy.BackgroundTransparency = 1
-	Glowy.Image = Util.GetCDNAsset("lightinursoul.graphic.png")
-	Glowy.ImageColor3 = UITextColor.Value
-	Glowy.ImageTransparency = 0.7
-	Glowy.ZIndex = -2
-
-	local Triforce = Util.MakeTriforce(3, Color3.new(1, 0.7, 0), 0)
-	Triforce.AnchorPoint = Vector2.new(0.5, 0.5)
-	Triforce.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Triforce.Size = UDim2.new(0, 160, 0, 160)
-	Triforce.Parent = TriforceClip
-
-	local particles = {}
-	local ps = 128
-	local psc = Color3.new(1, 0.9, 0)
-	for i=1, ps do
-		local r = (i / ps) * 2 * math.pi
-		local p = Util.Instance("Frame", CracktroFrame)
-		p.AnchorPoint = Vector2.new(0.5, 0.5)
-		p.Size = UDim2.fromOffset(2, 2)
-		p.BackgroundColor3 = psc
-		p.BackgroundTransparency = 0
-		p.BorderSizePixel = 0
-		p.ZIndex = -1
-		p.Visible = false
-		table.insert(particles, {
-			p, Vector2.new(math.sin(r), math.cos(r)) * 8,
-			Vector2.new(math.random(-128, 128), math.random(-128, 128)),
-			math.random() * 2 - 1, false, -1
-		})
-	end
-
-	local trivel = 360
-	local oldpbl = 0
-
-	local text = Util.MakeText(CracktroFrameText)
-	text.AnchorPoint = Vector2.new(0.5, 1)
-	text.Position = UDim2.new(0.5, 0, 1, -25)
-	text.ZIndex = 3
-	text.Parent = CracktroFrame
-	local text0 = Util.MakeText("Discord: discord.gg/NASNUKRBVM")
-	text0.AnchorPoint = Vector2.new(0.5, 1)
-	text0.Position = UDim2.new(0.5, 0, 1, -17)
-	text0.ZIndex = 3
-	text0.Parent = CracktroFrame
-	local text1 = Util.MakeText("Made by STEVETHEREALONE :" .. (math.random() < 0.333 and "3" or (math.random() < 0.5 and "D" or "P")))
-	text1.AnchorPoint = Vector2.new(0.5, 1)
-	text1.Position = UDim2.new(0.5, 0, 1, -17)
-	text1.ZIndex = 3
-	text1.Parent = CracktroFrame
-	local text2 = Util.MakeText("Click me to start!")
-	text2.AnchorPoint = Vector2.new(0.5, 1)
-	text2.Position = UDim2.new(0.5, 0, 1, -17)
-	text2.ZIndex = 3
-	text2.Parent = CracktroFrame
-	Util.SetTextColor(text, UITextColor.Value, 0)
-	Util.SetTextColor(text0, UITextColor.Value, 0)
-	Util.SetTextColor(text1, UITextColor.Value, 0)
-	Util.SetTextColor(text2, UITextColor.Value, 0)
-	local quotes = {
-		"\"EVERY CLIENT ORBITS A SERVER...\"",
-		Player.Name .. ", how is your " .. os.date("%A") .. "?",
-		"A great " .. os.date("%A") .. " today, eh?",
-		"Hello, " .. Player.Name .. ".",
-		"What makes you play at " .. os.date("%I %p") .. "?",
-		"You are going to love Uhhhhhh, I just know it.",
-		"This script is very \"verbose\".",
-		"Written mostly on a mobile phone.",
-		"I am pretty new in this community! :D",
-		"\"Dreams come true!\"",
-		"Idea originated from a dream.",
-		"If you love this program, join my Discord!",
-		"boredgal was here..",
-		"gugu gaga ultimate",
-		"Kleiner me to start!",
-		"Spongebob squarepants",
-		"I'm a Razor 1911 'fan' btw!",
-	}
-	local text3 = nil
-	local text3mustchange = false
-	local function changequote()
-		if text3 then text3:Destroy() end
-		text3 = Util.MakeText(quotes[math.random(1, #quotes)])
-		text3.AnchorPoint = Vector2.new(0.5, 1)
-		text3.Position = UDim2.new(0.5, 0, 1, -17)
-		text3.ZIndex = 3
-		text3.Parent = CracktroFrame
-		Util.SetTextColor(text3, UITextColor.Value, 0)
-	end
-	changequote()
-	UITextColor.Changed:Connect(function(val)
-		Util.SetTextColor(text, val, 0)
-		Util.SetTextColor(text0, val, 0)
-		Util.SetTextColor(text1, val, 0)
-		Util.SetTextColor(text2, val, 0)
-		Util.SetTextColor(text3, val, 0)
-	end)
-
-	local PositionProcessor = {
-		function(i, v, dt, pbl, spike)
-			local inst, pos, vel, zind, lvis, lzind = unpack(v)
-			local d = pos.Magnitude
-			if d > 0 then
-				local r = math.atan2(pos.X / d, pos.Y / d)
-				local a = math.pi * 0.375
-				local out = Vector2.new(math.sin(r + a), math.cos(r + a))
-				local tp = out * (40 + pbl / 12)
-				local tv = (tp - pos) * 2
-				vel = tv:Lerp(vel, math.exp(-2 * dt))
-				if math.random() < 0.01 then
-					vel += Vector2.new(math.random(-64, 64), math.random(-64, 64))
-				end
-				if spike > 64 then
-					vel += out * 64 * math.random()
-				end
-				pos += vel * dt
-			else
-				pos += Vector2.new(0, 10)
-			end
-			v[2], v[3] = pos, vel
-			return Vector3.new(zind * pos.Magnitude / 6, pos.Y, pos.X)
-		end,
-		function(i, v, dt, pbl, spike)
-			local inst, pos, vel, zind, lvis, lzind = unpack(v)
-			local a = i / ps
-			local s = (a * 6) % 1
-			local r = (a + s / 8) * 2 * math.pi + os.clock() * 2 + zind * math.pi * 0.125 * (pbl / 200) * (1 - s)
-			pos = Vector2.new(math.sin(r), math.cos(r)) * s * (100 + pbl / 15)
-			v[2], v[3] = pos, Vector2.zero
-			return Vector3.new(0, pos.Y, pos.X)
-		end,
-		function(i, v, dt, pbl, spike)
-			local inst, pos, vel, zind, lvis, lzind = unpack(v)
-			local a = i / ps
-			local b = 1 / 3
-			local c = math.sqrt(3) / 2
-			local d = {
-				{Vector2.new(0, b + c), Vector2.new(-0.5, b)},
-				{Vector2.new(-0.5, b), Vector2.new(-1, b - c)},
-				{Vector2.new(-1, b - c), Vector2.new(0, b - c)},
-				{Vector2.new(0, b - c), Vector2.new(1, b - c)},
-				{Vector2.new(1, b - c), Vector2.new(0.5, b)},
-				{Vector2.new(0.5, b), Vector2.new(0, b - c)},
-				{Vector2.new(0, b - c), Vector2.new(-0.5, b)},
-				{Vector2.new(-0.5, b), Vector2.new(0.5, b)},
-				{Vector2.new(0.5, b), Vector2.new(0, b + c)},
-			}
-			local t = a * #d
-			local i = math.floor(t) + 1
-			local u = t % 1
-			if i > #d then
-				i = #d
-				u = 1
-			end
-			pos = d[i][1]:Lerp(d[i][2], u) * 150
-			local r = os.clock() * 2
-			pos = Vector2.new(
-				pos.X * math.cos(r) - pos.Y * math.sin(r),
-				pos.X * math.sin(r) + pos.Y * math.cos(r)
-			)
-			v[2], v[3] = pos, Vector2.zero
-			return Vector3.new(0, pos.Y, pos.X)
-		end,
-	}
-	local currentprocessor = 1
-
-	AddToRenderStep(function(t, dt)
-		if Util.IsGuiVisible(CracktroFrame) then
-			local pp = PositionProcessor[currentprocessor]
-			local CracktroFrameAbsoluteSize = CracktroFrame.AbsoluteSize
-			Glowy.ImageColor3 = UITextColor.Value
-			Glowy.ImageTransparency = 0.75 + math.sin(((os.clock() / 10) % 2) * math.pi) * 0.05
-			local pbl = UISound.Music.PlaybackLoudness
-			local spike = math.max(0, (pbl - oldpbl) - 16)
-			oldpbl = pbl
-			local trivelt = pbl * 2 * dt
-			trivel = trivelt + (trivel - trivelt) * math.exp(-8 * dt)
-			Triforce.Rotation = (Triforce.Rotation + trivel) % 360
-			local ring = CFrame.Angles(
-				0,
-				math.cos(((t / 5) % 2) * math.pi) * math.pi * 0.5,
-				(1 - math.cos(((t / 7) % 2) * math.pi)) * math.pi * 0.5
-			)
-			local fov = 220
-			for i,v in particles do
-				local inst, pos, vel, zind, lvis, lzind = unpack(v)
-				local sp = ring:VectorToWorldSpace(pp(i, v, dt, pbl, spike))
-				local z = sp.Z
-				local sc = fov / (z + fov)
-				sp = Vector2.new(sp.X, sp.Y) * sc
-				local nvis, nzind = lvis, lzind
-				if z > 1 - fov then
-					inst.Position = Util.Vector2ToUDim2Offset(sp + CracktroFrameAbsoluteSize / 2)
-					inst.Size = UDim2.fromOffset(sc * 2.5, sc * 2.5)
-					--inst.BackgroundColor3 = psc:Lerp(Color3.new(0, 0, 0), math.clamp(z / (fov * 2), 0, 1))
-					nvis = true
-					if z > 0 then
-						nzind = -1
-					else
-						nzind = 1
-					end
-				else
-					nvis = false
-				end
-				if lvis ~= nvis then
-					inst.Visible = nvis
-					v[5] = nvis
-				end
-				if lzind ~= nzind then
-					inst.ZIndex = nzind
-					v[6] = nzind
-				end
-			end
-			local textsel = t % 9
-			if IsUhhhhhhFullyLoaded then
-				textsel = t % 12
-			end
-			textsel //= 3
-			if text3mustchange ~= (textsel == 3) then
-				text3mustchange = (textsel == 3)
-				if text3mustchange then changequote() end
-			end
-			if textsel == 0 then
-				text0.Visible = true
-				text1.Visible = false
-				text2.Visible = false
-				text3.Visible = false
-			elseif textsel == 1 then
-				text0.Visible = false
-				text1.Visible = true
-				text2.Visible = false
-				text3.Visible = false
-			elseif textsel == 2 then
-				text0.Visible = false
-				text1.Visible = false
-				text2.Visible = false
-				text3.Visible = true
-			else
-				text0.Visible = false
-				text1.Visible = false
-				text2.Visible = true
-				text3.Visible = false
-			end
-		else
-			currentprocessor = math.random(1, #PositionProcessor)
-		end
-	end, CracktroFrame)
-end
-task.wait()
 
 local UI = {}
 
@@ -1931,13 +1138,77 @@ local AnathemaLocale = {
         ["Dance Keybinds Enabled"] = "启用舞蹈快捷键",
         ["Language: 中文"] = "语言：中文",
         ["Language: English"] = "语言：English",
+        ["AnathemaFE"] = "AnathemaFE",
+        ["Universal Reanimate control surface"] = "通用 Reanimate 控制台",
+        ["A clean shell for Reanimate, character, moveset, dance, and module controls."] = "用于 Reanimate、角色、动作、舞蹈和模块控制的独立界面。",
+        ["Kernel bindings remain unchanged; only the presentation layer is replaced."] = "内核绑定保持不变，仅重构显示层。",
+        ["Status: Ready"] = "状态：已就绪",
+        ["Open Reanimate"] = "打开 Reanimate",
+        ["Open Movesets & Dances"] = "打开动作与舞蹈",
+        ["Independent control surface  /  v"] = "独立控制界面  /  v",
+        ["* Configuration *"] = "* 配置 *",
+        ["* Reanimate *"] = "* Reanimate *",
+        ["Internals Settings"] = "内部设置",
+        ["-=+ Limb Reanimator Config +=-"] = "-=+ 肢体 Reanimator 配置 +=-",
+        ["RootPart Mode"] = "RootPart 模式",
+        ["RootPart Velocity"] = "RootPart 速度",
+        ["Init Mode"] = "初始化模式",
+        ["Reset Character"] = "重置角色",
+        ["CDSB + Reset"] = "CDSB + 重置",
+        ["CDSB + SSE + Kill"] = "CDSB + SSE + 终止",
+        ["No Velocity"] = "无速度",
+        ["Follow Character"] = "跟随角色",
+        ["Fling-like"] = "类似甩飞",
+        ["Rebuild Hat Map"] = "重建帽子映射",
+        ["Ensure All Hats"] = "确保所有帽子",
+        ["Ensure Hat Collide"] = "确保帽子碰撞",
+        ["Hat Collide"] = "帽子碰撞",
+        ["Hat Fling"] = "帽子甩飞",
+        ["Hat Spin Fling"] = "帽子旋转甩飞",
+        ["Refresh Reanimate Character"] = "刷新 Reanimate 角色",
+        ["Show Reanimate Hitboxes"] = "显示 Reanimate 碰撞箱",
+        ["Permadeath"] = "永久死亡",
+        ["Respawn"] = "重生",
+        ["Tool Holding"] = "工具持有",
+        ["toolanim Method"] = "工具动画方法",
+        ["Torso Offset"] = "躯干偏移",
+        ["Apply RotVelocity"] = "应用旋转速度",
+        ["Use Physics Glue"] = "使用物理连接",
+        ["Use NaN State Fling"] = "使用 NaN 状态甩飞",
+        ["Patchma-like Netless"] = "Patchma 风格无网络状态",
+        ["Target Fling Enabled"] = "启用目标甩飞",
+        ["Target Fling Method"] = "目标甩飞方式",
+        ["Click Fling"] = "点击甩飞",
+        ["Key+Click Teleport"] = "按键 + 点击传送",
+        ["Teleport to 0, highest, 0"] = "传送至 0, 最高点, 0",
+        ["Teleport to 'LastSafe'"] = "传送至 LastSafe",
+        ["Show me how I look!"] = "查看我的外观！",
+        ["Reanimate by STEVE :D"] = "Reanimate 作者：STEVE :D",
+        ["Loading..."] = "加载中…",
+        ["Running: NONE"] = "运行中：无",
+        ["Play Dance"] = "播放舞蹈",
+        ["Use Moveset"] = "使用动作组",
+        ["Dance Keybinds &gt;"] = "舞蹈快捷键 &gt;",
+        ["Dances &gt;"] = "舞蹈 &gt;",
+        ["Movesets &gt;"] = "动作组 &gt;",
+        ["Delete Module"] = "删除模块",
+        ["Reload Modules"] = "重新加载模块",
+        ["Reload User Modules"] = "重新加载用户模块",
+        ["Redownload/Update"] = "重新下载/更新",
+        ["Buy Module for "] = "购买模块：",
+        ["Changelogs"] = "更新日志",
+        ["Credits"] = "鸣谢",
+        ["CLEAR ALL DOWNLOADED CONTENT"] = "清除全部已下载内容",
+        ["DISCLAIMER: Some random quotes made here are jokes (e.g.: 'this script mogs genesis') and should not be taken seriously. This also includes all the self-glazing quotes. It's your choice to agree with them or not, and if you do or don't, don't come harass/mock any individuals from it. In the end, a joke quote is a joke quote."] = "免责声明：此处部分随机语录为玩笑，不应当真，也不代表对任何个人的评价。",
     },
 }
 local AnathemaLanguage = SaveData.Language == "en" and "en" or "zh"
 local AnathemaTextBindings = {}
+local AnathemaPlaceholderBindings = {}
 local function AnathemaTranslate(text)
-    if AnathemaLanguage == "zh" and AnathemaLocale.zh[text] then
-        return AnathemaLocale.zh[text]
+    if type(text) ~= "string" or text == "" then return text end
+    if AnathemaLanguage == "zh" then
+        return AnathemaLocale.zh[text] or ("功能项 / " .. text)
     end
     return text
 end
@@ -1948,9 +1219,17 @@ local function AnathemaBindText(obj, source)
     obj.Text = rendered
     return obj
 end
+local function AnathemaBindPlaceholder(obj, source)
+    if type(source) ~= "string" then return obj end
+    AnathemaPlaceholderBindings[obj] = {source = source}
+    obj.PlaceholderText = AnathemaTranslate(source)
+    return obj
+end
 local function AnathemaSetLanguage(language)
     AnathemaLanguage = language == "en" and "en" or "zh"
     SaveData.Language = AnathemaLanguage
+    AnathemaTopBarText.Text = AnathemaLanguage == "zh" and "AnathemaFE // 通用 Reanimate" or "AnathemaFE // Universal Reanimate"
+    TopBarSubtext.Text = (AnathemaLanguage == "zh" and "独立控制界面  /  v" or "Independent control surface  /  v") .. UhhhhhhVersion
     for obj, binding in pairs(AnathemaTextBindings) do
         if obj and obj.Parent then
             -- Dynamic status/log labels may have been updated by a feature;
@@ -1964,74 +1243,82 @@ local function AnathemaSetLanguage(language)
             AnathemaTextBindings[obj] = nil
         end
     end
+    for obj, binding in pairs(AnathemaPlaceholderBindings) do
+        if obj and obj.Parent then
+            obj.PlaceholderText = AnathemaTranslate(binding.source)
+        else
+            AnathemaPlaceholderBindings[obj] = nil
+        end
+    end
 end
 
 function UI.CreatePage()
 	local Frame = Util.Instance("ScrollingFrame", WindowContent)
-	Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Frame.Size = UDim2.new(0, 360, 0, 205)
+	Frame.Name = "AnathemaPage"
+	Frame.AnchorPoint = Vector2.new(0, 0)
+	Frame.Position = UDim2.fromOffset(176, 12)
+	Frame.Size = UDim2.new(1, -188, 1, -24)
 	Frame.BackgroundTransparency = 0
-	Frame.BackgroundColor3 = Color3.new(0, 0, 0)
-	Frame.BorderSizePixel = 1
-	Frame.BorderColor3 = Color3.new(1, 1, 1)
+	Frame.BackgroundColor3 = Color3.fromRGB(18, 20, 34)
+	Frame.BorderSizePixel = 0
 	Frame.Visible = true
-	Frame.ZIndex = 0
+	Frame.ZIndex = 12
 	Frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	Frame.CanvasSize = UDim2.new(0, 0, 0, 0)
 	Frame.ClipsDescendants = true
+	local Corner = Instance.new("UICorner", Frame)
+	Corner.CornerRadius = UDim.new(0, 10)
+	local Stroke = Instance.new("UIStroke", Frame)
+	Stroke.Color = Color3.fromRGB(70, 74, 112)
+	Stroke.Transparency = 0.45
+	Stroke.Thickness = 1
 	AddToRenderStep(function(t)
-		Frame.BorderColor3 = GetUIColor(t)
-		Frame.BackgroundColor3 = GetUIBGColor(t)
+		Stroke.Color = GetUIColor(t)
 	end, Frame)
 	Frame.ScrollingDirection = Enum.ScrollingDirection.Y
-	Frame.ScrollBarThickness = 3
-	Frame.ElasticBehavior = Enum.ElasticBehavior.Always
+	Frame.ScrollBarThickness = 4
+	Frame.ElasticBehavior = Enum.ElasticBehavior.Never
 	Frame.TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
 	Frame.MidImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
 	Frame.BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
-	Frame.ScrollBarImageTransparency = 0.5
-	Frame.ScrollBarImageColor3 = UITextColor.Value
-	Util.LinkDestroyI2C(Frame, UITextColor.Changed:Connect(function(val)
-		Frame.ScrollBarImageColor3 = val
-	end))
+	Frame.ScrollBarImageTransparency = 0.35
+	Frame.ScrollBarImageColor3 = Color3.fromRGB(126, 92, 255)
 	local Padding = Util.Instance("UIPadding", Frame)
-	Padding.PaddingTop = UDim.new(0, 5)
-	Padding.PaddingBottom = UDim.new(0, 0)
-	Padding.PaddingLeft = UDim.new(0, 0)
-	Padding.PaddingRight = UDim.new(0, 0)
+	Padding.PaddingTop = UDim.new(0, 16)
+	Padding.PaddingBottom = UDim.new(0, 18)
+	Padding.PaddingLeft = UDim.new(0, 16)
+	Padding.PaddingRight = UDim.new(0, 16)
 	local UIList = Util.Instance("UIListLayout", Frame)
 	UIList.FillDirection = Enum.FillDirection.Vertical
 	UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	UIList.VerticalAlignment = Enum.VerticalAlignment.Top
-	UIList.Padding = UDim.new(0, 0)
+	UIList.Padding = UDim.new(0, 8)
 	UIList.SortOrder = Enum.SortOrder.LayoutOrder
 	return Frame
 end
 function UI.CreateText(parent, text, size, alignment)
-	local margin = 5
+	local margin = 2
 	local Container = Util.Instance("Frame", parent)
-	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 65536)
+	Container.Size = UDim2.new(1, 0, 0, 30)
 	Container.BackgroundTransparency = 1
 	Container.LayoutOrder = #parent:GetChildren()
 	local Text = Util.Instance("TextLabel", Container)
-	Text.Position = UDim2.new(0, margin, 0, 0)
-	Text.Size = UDim2.new(1, margin * -2, 1, -margin + 1)
+	Text.Position = UDim2.fromOffset(margin, 0)
+	Text.Size = UDim2.new(1, margin * -2, 1, 0)
 	Text.BackgroundTransparency = 1
 	Text.RichText = true
-	Text.Font = Enum.Font.Code
-	Text.TextColor3 = Color3.new(1, 1, 1)
+	Text.Font = Enum.Font.Gotham
+	Text.TextColor3 = size >= 18 and Color3.fromRGB(245, 246, 255) or Color3.fromRGB(177, 182, 207)
 	Text.TextTransparency = 0
 	Text.TextXAlignment = alignment
-	Text.TextYAlignment = Enum.TextYAlignment.Top
+	Text.TextYAlignment = Enum.TextYAlignment.Center
 	Text.TextWrapped = true
-	Text.TextSize = size
+	Text.TextSize = math.max(11, size)
 	RegisterTextLabel(Text)
 	local function update()
-		local x = parent.AbsoluteSize.X
-		local size = TextService:GetTextSize(Text.ContentText, Text.TextSize, Text.Font, Vector2.new(x - margin * 2, math.huge))
-		Container.Size = UDim2.new(1, 0, 0, size.Y + margin)
+		local x = math.max(40, parent.AbsoluteSize.X - 4)
+		local textHeight = TextService:GetTextSize(Text.ContentText, Text.TextSize, Text.Font, Vector2.new(x, math.huge)).Y
+		Container.Size = UDim2.new(1, 0, 0, math.max(24, textHeight + 4))
 	end
 	AnathemaBindText(Text, text)
 	update()
@@ -2040,181 +1327,141 @@ function UI.CreateText(parent, text, size, alignment)
 end
 function UI.CreateSeparator(parent)
 	local Container = Util.Instance("Frame", parent)
-	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 7)
+	Container.Size = UDim2.new(1, 0, 0, 8)
 	Container.BackgroundTransparency = 1
 	Container.LayoutOrder = #parent:GetChildren()
 	local Sep = Util.Instance("Frame", Container)
 	Sep.AnchorPoint = Vector2.new(0.5, 0.5)
 	Sep.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Sep.Size = UDim2.new(1, -8, 0, 1)
-	Sep.BackgroundColor3 = UITextColor.Value
-	Sep.BackgroundTransparency = 0.8
+	Sep.Size = UDim2.new(1, -4, 0, 1)
+	Sep.BackgroundColor3 = Color3.fromRGB(70, 74, 112)
+	Sep.BackgroundTransparency = 0.2
 	Sep.BorderSizePixel = 0
-	Util.LinkDestroyI2C(Sep, UITextColor.Changed:Connect(function(val)
-		Sep.BackgroundColor3 = val
-	end))
 end
 function UI.CreateButton(parent, text, size)
-	local margin = 5
 	local Container = Util.Instance("Frame", parent)
-	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 65536)
+	Container.Size = UDim2.new(1, 0, 0, math.max(42, size + 20))
 	Container.BackgroundTransparency = 1
 	Container.LayoutOrder = #parent:GetChildren()
 	local Button = Util.Instance("TextButton", Container)
-	Button.AnchorPoint = Vector2.new(0, 0)
-	Button.Position = UDim2.new(0, margin, 0, margin // 2)
-	Button.Size = UDim2.new(1, margin * -2, 1, -margin)
-	Button.BackgroundTransparency = 0
-	Button.BackgroundColor3 = Color3.new(1, 1, 1)
+	Button.Position = UDim2.fromOffset(0, 0)
+	Button.Size = UDim2.new(1, 0, 1, 0)
+	Button.BackgroundColor3 = Color3.fromRGB(37, 40, 65)
 	Button.BorderSizePixel = 0
 	Button.Text = ""
-	Button.AutoButtonColor = true
+	Button.AutoButtonColor = false
+	local Corner = Instance.new("UICorner", Button)
+	Corner.CornerRadius = UDim.new(0, 8)
+	local Stroke = Instance.new("UIStroke", Button)
+	Stroke.Color = Color3.fromRGB(79, 82, 125)
+	Stroke.Transparency = 0.25
 	local ButtonText = Util.Instance("TextLabel", Button)
-	ButtonText.AnchorPoint = Vector2.new(0, 0.5)
-	ButtonText.Position = UDim2.new(0, 0, 0.5, 0)
-	ButtonText.Size = UDim2.new(1, 0, 1, -margin)
+	ButtonText.Position = UDim2.fromOffset(14, 0)
+	ButtonText.Size = UDim2.new(1, -28, 1, 0)
 	ButtonText.BackgroundTransparency = 1
 	ButtonText.RichText = true
-	ButtonText.Font = Enum.Font.Code
-	ButtonText.TextColor3 = Color3.new(1, 1, 1)
-	ButtonText.TextTransparency = 0
+	ButtonText.Font = Enum.Font.GothamMedium
+	ButtonText.TextColor3 = Color3.fromRGB(235, 237, 250)
 	ButtonText.TextXAlignment = Enum.TextXAlignment.Center
 	ButtonText.TextYAlignment = Enum.TextYAlignment.Center
 	ButtonText.TextWrapped = true
-	ButtonText.TextSize = size
+	ButtonText.TextSize = math.max(11, size)
 	RegisterTextLabel(ButtonText)
-	Stylize(Button)
-	local function update()
-		local x = parent.AbsoluteSize.X
-		local size = TextService:GetTextSize(ButtonText.ContentText, ButtonText.TextSize, ButtonText.Font, Vector2.new(x - margin * 2, math.huge))
-		Container.Size = UDim2.new(1, 0, 0, size.Y + margin * 2)
-	end
 	AnathemaBindText(ButtonText, text)
-	update()
-	ButtonText.Changed:Connect(update)
+	Button.MouseEnter:Connect(function() Button.BackgroundColor3 = Color3.fromRGB(54, 48, 91) end)
+	Button.MouseLeave:Connect(function() Button.BackgroundColor3 = Color3.fromRGB(37, 40, 65) end)
 	return Button, ButtonText
 end
 function UI.CreateSwitch(parent, text, value)
-	local margin = 5
-	local switchsize = 50
 	local Container = Util.Instance("Frame", parent)
-	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 10)
-	Container.BackgroundTransparency = 1
+	Container.Size = UDim2.new(1, 0, 0, 40)
+	Container.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
+	Container.BackgroundTransparency = 0
+	Container.BorderSizePixel = 0
 	Container.LayoutOrder = #parent:GetChildren()
+	local ContainerCorner = Instance.new("UICorner", Container)
+	ContainerCorner.CornerRadius = UDim.new(0, 8)
 	local Button = Util.Instance("TextButton", Container)
-	Button.AnchorPoint = Vector2.new(0, 0)
-	Button.Position = UDim2.new(0, 0, 0, 0)
 	Button.Size = UDim2.new(1, 0, 1, 0)
 	Button.BackgroundTransparency = 1
 	Button.Text = ""
 	local ButtonText = Util.Instance("TextLabel", Button)
-	ButtonText.AnchorPoint = Vector2.new(0, 0)
-	ButtonText.Position = UDim2.new(0, margin, 0, 0)
-	ButtonText.Size = UDim2.new(1, margin * -3 - switchsize, 1, 0)
+	ButtonText.Position = UDim2.fromOffset(14, 0)
+	ButtonText.Size = UDim2.new(1, -78, 1, 0)
 	ButtonText.BackgroundTransparency = 1
 	ButtonText.RichText = true
-	ButtonText.Font = Enum.Font.Code
-	ButtonText.TextColor3 = Color3.new(1, 1, 1)
-	ButtonText.TextTransparency = 0
+	ButtonText.Font = Enum.Font.Gotham
+	ButtonText.TextColor3 = Color3.fromRGB(220, 223, 240)
 	ButtonText.TextXAlignment = Enum.TextXAlignment.Left
 	ButtonText.TextYAlignment = Enum.TextYAlignment.Center
 	ButtonText.TextWrapped = true
-	ButtonText.TextSize = 20
+	ButtonText.TextSize = 12
 	RegisterTextLabel(ButtonText)
-	local function update()
-		local x = parent.AbsoluteSize.X
-		local size = TextService:GetTextSize(ButtonText.ContentText, ButtonText.TextSize, ButtonText.Font, Vector2.new(x - margin * 3 - switchsize, math.huge))
-		Container.Size = UDim2.new(1, 0, 0, math.max(35, size.Y))
-	end
 	AnathemaBindText(ButtonText, text)
-	update()
-	ButtonText.Changed:Connect(update)
 	local Switch = Util.Instance("Frame", Container)
 	Switch.AnchorPoint = Vector2.new(1, 0.5)
-	Switch.Position = UDim2.new(1, -margin, 0.5, 0)
-	Switch.Size = UDim2.new(0, 25, 0, 25)
-	Switch.BackgroundTransparency = 0
-	Switch.BackgroundColor3 = Color3.new(0, 0, 0)
+	Switch.Position = UDim2.new(1, -12, 0.5, 0)
+	Switch.Size = UDim2.fromOffset(42, 22)
+	Switch.BackgroundColor3 = Color3.fromRGB(55, 58, 83)
 	Switch.BorderSizePixel = 0
-	Util.Instance("UICorner", Switch).CornerRadius = UDim.new(0, 5)
-	Stylize(Switch)
+	local SwitchCorner = Instance.new("UICorner", Switch)
+	SwitchCorner.CornerRadius = UDim.new(1, 0)
 	local SwitchDot = Util.Instance("Frame", Switch)
 	SwitchDot.AnchorPoint = Vector2.new(0.5, 0.5)
-	SwitchDot.Position = UDim2.new(0.5, 0, 0.5, 0)
-	SwitchDot.Size = UDim2.new(0, 19, 0, 19)
-	SwitchDot.BackgroundTransparency = 0.2
-	SwitchDot.BackgroundColor3 = UITextColor.Value
+	SwitchDot.Position = UDim2.new(0, 11, 0.5, 0)
+	SwitchDot.Size = UDim2.fromOffset(16, 16)
+	SwitchDot.BackgroundColor3 = Color3.fromRGB(230, 232, 247)
 	SwitchDot.BorderSizePixel = 0
-	Util.LinkDestroyI2C(SwitchDot, UITextColor.Changed:Connect(function(val)
-		SwitchDot.BackgroundColor3 = val
-	end))
-	Util.Instance("UICorner", SwitchDot).CornerRadius = UDim.new(0, 2)
+	local DotCorner = Instance.new("UICorner", SwitchDot)
+	DotCorner.CornerRadius = UDim.new(1, 0)
 	local Lever = Util.Instance("BoolValue")
 	Lever.Value = value
 	local function updatesw()
-		SwitchDot.Visible = Lever.Value
+		if Lever.Value then
+			Switch.BackgroundColor3 = Color3.fromRGB(105, 76, 215)
+			SwitchDot.Position = UDim2.new(1, -11, 0.5, 0)
+		else
+			Switch.BackgroundColor3 = Color3.fromRGB(55, 58, 83)
+			SwitchDot.Position = UDim2.new(0, 11, 0.5, 0)
+		end
 	end
 	Lever.Changed:Connect(updatesw)
 	updatesw()
-	Button.Activated:Connect(function()
-		Lever.Value = not Lever.Value
-	end)
+	Button.Activated:Connect(function() Lever.Value = not Lever.Value end)
 	return Lever, ButtonText
 end
 function UI.CreateTextbox(parent, text, placeholder, size)
-	local margin = 5
 	local Container = Util.Instance("Frame", parent)
-	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 65536)
+	Container.Size = UDim2.new(1, 0, 0, 48)
 	Container.BackgroundTransparency = 1
 	Container.LayoutOrder = #parent:GetChildren()
 	local Box = Util.Instance("Frame", Container)
-	Box.AnchorPoint = Vector2.new(0, 0)
-	Box.Position = UDim2.new(0, margin, 0, margin // 2)
-	Box.Size = UDim2.new(1, margin * -2, 1, -margin)
-	Box.BackgroundTransparency = 0
-	Box.BackgroundColor3 = Color3.new(0.9, 0.9, 0.9)
+	Box.Position = UDim2.fromOffset(0, 4)
+	Box.Size = UDim2.new(1, 0, 1, -8)
+	Box.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
 	Box.BorderSizePixel = 0
+	local Corner = Instance.new("UICorner", Box)
+	Corner.CornerRadius = UDim.new(0, 8)
+	local Stroke = Instance.new("UIStroke", Box)
+	Stroke.Color = Color3.fromRGB(79, 82, 125)
+	Stroke.Transparency = 0.35
 	local BoxText = Util.Instance("TextBox", Box)
-	BoxText.AnchorPoint = Vector2.new(0, 0.5)
-	BoxText.Position = UDim2.new(0, 0, 0.5, 0)
-	BoxText.Size = UDim2.new(1, 0, 1, -margin)
+	BoxText.Position = UDim2.fromOffset(14, 0)
+	BoxText.Size = UDim2.new(1, -28, 1, 0)
 	BoxText.BackgroundTransparency = 1
-	BoxText.Font = Enum.Font.Code
-	BoxText.TextColor3 = Color3.new(1, 1, 1)
-	BoxText.PlaceholderColor3 = Color3.new(0.7, 0.7, 0.7)
+	BoxText.Font = Enum.Font.Gotham
+	BoxText.TextColor3 = Color3.fromRGB(235, 237, 250)
+	BoxText.PlaceholderColor3 = Color3.fromRGB(132, 137, 165)
 	BoxText.TextTransparency = 0
-	BoxText.TextXAlignment = Enum.TextXAlignment.Center
+	BoxText.TextXAlignment = Enum.TextXAlignment.Left
 	BoxText.TextYAlignment = Enum.TextYAlignment.Center
-	BoxText.TextWrapped = true
-	BoxText.TextSize = size
+	BoxText.TextWrapped = false
+	BoxText.TextSize = size or 12
 	BoxText.ClearTextOnFocus = false
 	RegisterTextLabel(BoxText)
-	BoxText.Focused:Connect(function()
-		UISound.Click:Play()
-	end)
-	Stylize(Box, {
-		Depthed = true,
-	})
-	local function update()
-		local x = parent.AbsoluteSize.X
-		if not BoxText.TextWrapped then
-			x = math.huge
-		end
-		local t = BoxText.Text
-		if t:len() == 0 then
-			t = BoxText.PlaceholderText
-		end
-		local size = TextService:GetTextSize(t, BoxText.TextSize, BoxText.Font, Vector2.new(x - margin * 2, math.huge))
-		Container.Size = UDim2.new(1, 0, 0, size.Y + margin * 2 + 2)
-	end
+	BoxText.Focused:Connect(function() UISound.Click:Play() end)
 	AnathemaBindText(BoxText, text)
-	BoxText.PlaceholderText = AnathemaTranslate(placeholder)
-	update()
-	BoxText.Changed:Connect(update)
+	AnathemaBindPlaceholder(BoxText, placeholder or "")
 	return BoxText
 end
 function UI.CreateSlider(parent, text, value, min, max, step)
@@ -2225,39 +1472,39 @@ function UI.CreateSlider(parent, text, value, min, max, step)
 	local margin = 5
 	local Container = Util.Instance("Frame", parent)
 	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 65)
+	Container.Size = UDim2.new(1, 0, 0, 72)
 	Container.BackgroundTransparency = 1
 	Container.LayoutOrder = #parent:GetChildren()
 	local Text = Util.Instance("TextLabel", Container)
 	Text.AnchorPoint = Vector2.new(0, 0)
-	Text.Position = UDim2.new(0, margin, 0, 0)
-	Text.Size = UDim2.new(1, margin * -2, 0, 35)
+	Text.Position = UDim2.fromOffset(14, 0)
+	Text.Size = UDim2.new(1, -112, 0, 34)
 	Text.BackgroundTransparency = 1
 	Text.RichText = true
-	Text.Font = Enum.Font.Code
-	Text.TextColor3 = Color3.new(1, 1, 1)
+	Text.Font = Enum.Font.Gotham
+	Text.TextColor3 = Color3.fromRGB(220, 223, 240)
 	Text.TextTransparency = 0
 	Text.TextXAlignment = Enum.TextXAlignment.Left
 	Text.TextYAlignment = Enum.TextYAlignment.Center
 	Text.TextWrapped = true
-	Text.TextSize = 20
+	Text.TextSize = 12
 	AnathemaBindText(Text, text)
 	RegisterTextLabel(Text)
 	local Box = Util.Instance("Frame", Container)
 	Box.AnchorPoint = Vector2.new(1, 0)
-	Box.Position = UDim2.new(1, -margin, 0, margin)
-	Box.Size = UDim2.new(0, 80, 0, 35 - margin * 2)
+	Box.Position = UDim2.new(1, -14, 0, 5)
+	Box.Size = UDim2.fromOffset(82, 30)
 	Box.BackgroundTransparency = 0
-	Box.BackgroundColor3 = Color3.new(1, 1, 1)
+	Box.BackgroundColor3 = Color3.fromRGB(37, 40, 65)
 	Box.BorderSizePixel = 0
 	local BoxText = Util.Instance("TextBox", Box)
 	BoxText.AnchorPoint = Vector2.new(0, 0.5)
 	BoxText.Position = UDim2.new(0, 0, 0.5, 0)
 	BoxText.Size = UDim2.new(1, 0, 1, -margin)
 	BoxText.BackgroundTransparency = 1
-	BoxText.Font = Enum.Font.Code
-	BoxText.TextColor3 = Color3.new(1, 1, 1)
-	BoxText.PlaceholderColor3 = Color3.new(0.7, 0.7, 0.7)
+	BoxText.Font = Enum.Font.Gotham
+	BoxText.TextColor3 = Color3.fromRGB(220, 223, 240)
+	BoxText.PlaceholderColor3 = Color3.fromRGB(132, 137, 165)
 	BoxText.TextTransparency = 0
 	BoxText.TextXAlignment = Enum.TextXAlignment.Center
 	BoxText.TextYAlignment = Enum.TextYAlignment.Center
@@ -2273,8 +1520,8 @@ function UI.CreateSlider(parent, text, value, min, max, step)
 	})
 	local SliderC = Util.Instance("TextButton", Container)
 	SliderC.AnchorPoint = Vector2.new(0, 0)
-	SliderC.Position = UDim2.new(0, 0, 0, 40)
-	SliderC.Size = UDim2.new(1, 0, 0, 20)
+	SliderC.Position = UDim2.fromOffset(14, 43)
+	SliderC.Size = UDim2.new(1, -28, 0, 20)
 	SliderC.BackgroundTransparency = 1
 	SliderC.Text = ""
 	SliderC.AutoButtonColor = true
@@ -2283,14 +1530,14 @@ function UI.CreateSlider(parent, text, value, min, max, step)
 	SliderR.Position = UDim2.new(0.5, 0, 0.5, 0)
 	SliderR.Size = UDim2.new(1, margin * -2 - 18, 0, 5)
 	SliderR.BackgroundTransparency = 0
-	SliderR.BackgroundColor3 = Color3.new(1, 1, 1)
+	SliderR.BackgroundColor3 = Color3.fromRGB(70, 74, 112)
 	SliderR.BorderSizePixel = 0
 	local SliderB = Util.Instance("Frame", SliderR)
 	SliderB.AnchorPoint = Vector2.new(0.5, 0.5)
 	SliderB.Position = UDim2.new(0, 0, 0.5, 0)
 	SliderB.Size = UDim2.new(0, 18, 0, 18)
 	SliderB.BackgroundTransparency = 0
-	SliderB.BackgroundColor3 = Color3.new(1, 1, 1)
+	SliderB.BackgroundColor3 = Color3.fromRGB(126, 92, 255)
 	SliderB.BorderSizePixel = 0
 	SliderB.ZIndex = 2
 	Stylize(SliderR, {
@@ -2386,179 +1633,139 @@ function UI.CreateSlider(parent, text, value, min, max, step)
 end
 function UI.CreateDropdown(parent, text, array, value)
 	value = value and math.clamp(value, 1, #array) or 1
-	local margin = 5
 	local Container = Util.Instance("Frame", parent)
-	Container.AnchorPoint = Vector2.new(0.5, 0)
-	Container.Size = UDim2.new(1, 0, 0, 10)
+	Container.Size = UDim2.new(1, 0, 0, 44)
 	Container.BackgroundTransparency = 1
 	Container.LayoutOrder = #parent:GetChildren()
 	local Text = Util.Instance("TextLabel", Container)
-	Text.AnchorPoint = Vector2.new(0, 0)
-	Text.Position = UDim2.new(0, margin, 0, 0)
-	Text.Size = UDim2.new(1, margin * -2, 1, 0)
+	Text.Position = UDim2.fromOffset(14, 0)
+	Text.Size = UDim2.new(0.48, -14, 1, 0)
 	Text.BackgroundTransparency = 1
 	Text.RichText = true
-	Text.Font = Enum.Font.Code
-	Text.TextColor3 = Color3.new(1, 1, 1)
-	Text.TextTransparency = 0
+	Text.Font = Enum.Font.Gotham
+	Text.TextColor3 = Color3.fromRGB(205, 209, 231)
 	Text.TextXAlignment = Enum.TextXAlignment.Left
 	Text.TextYAlignment = Enum.TextYAlignment.Center
 	Text.TextWrapped = true
-	Text.TextSize = 20
+	Text.TextSize = 12
 	RegisterTextLabel(Text)
 	local Dropdown = Util.Instance("TextButton", Container)
 	Dropdown.AnchorPoint = Vector2.new(1, 0.5)
-	Dropdown.Position = UDim2.new(1, -margin, 0.5, 0)
-	Dropdown.Size = UDim2.new(0.5, 0, 1, -margin)
-	Dropdown.BackgroundTransparency = 0
-	Dropdown.BackgroundColor3 = Color3.new(1, 1, 1)
+	Dropdown.Position = UDim2.new(1, 0, 0.5, 0)
+	Dropdown.Size = UDim2.new(0.5, -6, 0, 34)
+	Dropdown.BackgroundColor3 = Color3.fromRGB(37, 40, 65)
 	Dropdown.BorderSizePixel = 0
 	Dropdown.Text = ""
-	Dropdown.AutoButtonColor = true
+	Dropdown.AutoButtonColor = false
+	local Corner = Instance.new("UICorner", Dropdown)
+	Corner.CornerRadius = UDim.new(0, 8)
+	local Stroke = Instance.new("UIStroke", Dropdown)
+	Stroke.Color = Color3.fromRGB(79, 82, 125)
+	Stroke.Transparency = 0.25
 	local DropdownText = Util.Instance("TextLabel", Dropdown)
-	DropdownText.AnchorPoint = Vector2.new(0.5, 0.5)
-	DropdownText.Position = UDim2.new(0.5, 0, 0.5, 0)
-	DropdownText.Size = UDim2.new(1, -margin * 2, 1, -margin)
+	DropdownText.Size = UDim2.new(1, -24, 1, 0)
+	DropdownText.Position = UDim2.fromOffset(12, 0)
 	DropdownText.BackgroundTransparency = 1
-	DropdownText.RichText = true
-	DropdownText.Font = Enum.Font.Code
-	DropdownText.TextColor3 = Color3.new(1, 1, 1)
-	DropdownText.TextTransparency = 0
-	DropdownText.TextXAlignment = Enum.TextXAlignment.Center
+	DropdownText.Font = Enum.Font.Gotham
+	DropdownText.TextColor3 = Color3.fromRGB(235, 237, 250)
+	DropdownText.TextXAlignment = Enum.TextXAlignment.Left
 	DropdownText.TextYAlignment = Enum.TextYAlignment.Center
 	DropdownText.TextWrapped = true
-	DropdownText.TextSize = 15
+	DropdownText.TextSize = 11
 	RegisterTextLabel(DropdownText)
-	Stylize(Dropdown)
-	local function update()
-		local x = parent.AbsoluteSize.X
-		local size1 = TextService:GetTextSize(Text.ContentText, Text.TextSize, Text.Font, Vector2.new(x - margin * 2, math.huge))
-		local size2 = TextService:GetTextSize(DropdownText.ContentText, DropdownText.TextSize, DropdownText.Font, Vector2.new(x * 0.8 - margin * 2, math.huge))
-		Container.Size = UDim2.new(1, 0, 0, math.max(35, size1.Y, size2.Y + margin * 2))
-		Dropdown.Size = UDim2.new(0, math.max(60, size2.X + margin * 2 + 2), 0, math.max(25, size2.Y + margin * 2))
-	end
-	AnathemaBindText(Text, text)
-	DropdownText.Text = array[value]
-	update()
-	Text.Changed:Connect(update)
-	DropdownText.Changed:Connect(update)
 	local Select = Util.Instance("IntValue")
 	Select.Value = value
-	Select.Changed:Connect(function()
-		DropdownText.Text = array[Select.Value]
-	end)
 	local Droplist = Util.Instance("ScrollingFrame", UIMainFrame)
-	Droplist.AnchorPoint = Vector2.new(0, 0)
-	Droplist.Position = UDim2.new(0, 0, 0, 0)
-	Droplist.Size = UDim2.new(0, 0, 0, 0)
-	Droplist.BackgroundTransparency = 0
-	Droplist.BackgroundColor3 = Color3.new(1, 1, 1)
+	Droplist.Name = "AnathemaDropdown"
+	Droplist.BackgroundColor3 = Color3.fromRGB(24, 26, 45)
 	Droplist.BorderSizePixel = 0
 	Droplist.Visible = false
 	Droplist.CanvasSize = UDim2.new(0, 0, 0, 0)
 	Droplist.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	Droplist.ScrollBarThickness = 0
+	Droplist.ScrollBarThickness = 3
 	Droplist.ScrollingDirection = Enum.ScrollingDirection.Y
-	local Padding = Util.Instance("UIPadding", Droplist)
-	Padding.PaddingLeft = UDim.new(0, 5)
-	Padding.PaddingRight = UDim.new(0, 5)
-	Padding.PaddingTop = UDim.new(0, 0)
-	Padding.PaddingBottom = UDim.new(0, 0)
-	local UIList = Util.Instance("UIListLayout", Droplist)
-	UIList.FillDirection = Enum.FillDirection.Vertical
-	UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	UIList.VerticalAlignment = Enum.VerticalAlignment.Top
-	UIList.Padding = UDim.new(0, 0)
+	Droplist.ZIndex = 100
+	local DropCorner = Instance.new("UICorner", Droplist)
+	DropCorner.CornerRadius = UDim.new(0, 8)
+	local DropStroke = Instance.new("UIStroke", Droplist)
+	DropStroke.Color = Color3.fromRGB(126, 92, 255)
+	DropStroke.Transparency = 0.25
+	local Padding = Instance.new("UIPadding", Droplist)
+	Padding.PaddingTop = UDim.new(0, 4)
+	Padding.PaddingBottom = UDim.new(0, 4)
+	Padding.PaddingLeft = UDim.new(0, 4)
+	Padding.PaddingRight = UDim.new(0, 4)
+	local UIList = Instance.new("UIListLayout", Droplist)
 	UIList.SortOrder = Enum.SortOrder.LayoutOrder
-	Stylize(Droplist, {
-		Glow = true
-	})
+	UIList.Padding = UDim.new(0, 2)
 	local items = {}
-	local sizex = 60
-	local interact = false
-	local opened = false
-	Util.LinkDestroyI2I(Dropdown, Droplist)
-	for i,itemname in array do
+	local function renderValue()
+		AnathemaBindText(DropdownText, array[Select.Value] or "--")
+	end
+	AnathemaBindText(Text, text)
+	for i, itemname in array do
 		local Item = Util.Instance("TextButton", Droplist)
-		Item.Size = UDim2.new(1, 0, 0, 20)
-		Item.BackgroundTransparency = 0
-		Item.BackgroundColor3 = Color3.new(0, 0, 0)
+		Item.Size = UDim2.new(1, 0, 0, 28)
+		Item.BackgroundColor3 = Color3.fromRGB(31, 34, 56)
 		Item.BorderSizePixel = 0
-		Item.AutoButtonColor = true
+		Item.AutoButtonColor = false
 		Item.LayoutOrder = i
-		Item.Text = itemname
-		Item.TextSize = 15
-		Item.Font = Enum.Font.Code
-		Item.TextColor3 = Color3.new(1, 1, 1)
+		AnathemaBindText(Item, itemname)
+		Item.TextSize = 11
+		Item.Font = Enum.Font.Gotham
+		Item.TextColor3 = Color3.fromRGB(225, 228, 244)
 		Item.TextXAlignment = Enum.TextXAlignment.Left
 		Item.TextYAlignment = Enum.TextYAlignment.Center
 		Item.TextWrapped = false
+		Item.ZIndex = 101
+		local ItemPad = Instance.new("UIPadding", Item)
+		ItemPad.PaddingLeft = UDim.new(0, 9)
+		local ItemCorner = Instance.new("UICorner", Item)
+		ItemCorner.CornerRadius = UDim.new(0, 5)
 		RegisterTextLabel(Item)
 		table.insert(items, Item)
-		local size = TextService:GetTextSize(itemname, Item.TextSize, Item.Font, Vector2.new(math.huge, math.huge))
-		sizex = math.max(sizex, size.X + 12)
+		Item.MouseEnter:Connect(function() Item.BackgroundColor3 = Color3.fromRGB(68, 54, 118) end)
+		Item.MouseLeave:Connect(function() Item.BackgroundColor3 = Color3.fromRGB(31, 34, 56) end)
 		Item.Activated:Connect(function()
 			Select.Value = i
-			opened = false
-			interact = true
-		end)
-		Item.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				interact = true
-				UISound.Click:Play()
-			end
-		end)
-	end
-	Dropdown.Activated:Connect(function()
-		opened = not opened
-		interact = true
-	end)
-	local conn = UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			task.wait()
-			if not interact then
-				opened = false
-			end
-			interact = false
-		end
-	end)
-	Util.LinkDestroyI2C(Dropdown, conn)
-	local scrollframe = Container:FindFirstAncestorWhichIsA("ScrollingFrame")
-	if scrollframe then
-		local conn = scrollframe:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-			opened = false
-		end)
-	end
-	local opentween = 0
-	AddToRenderStep(function(t, dt)
-		if opened then
-			opentween = 1 + (opentween - 1) * math.exp(-32 * dt)
-			Droplist.ZIndex = 4
-			Droplist.Interactable = true
-		else
-			opentween *= math.exp(-32 * dt)
-			Droplist.ZIndex = 3
-			Droplist.Interactable = false
-		end
-		local ysize = math.round(math.min(90, #items * 20) * opentween)
-		if ysize >= 1 then
-			Droplist.Position = Util.Vector2ToUDim2Offset((Dropdown.AbsolutePosition + Vector2.new(0, Dropdown.AbsoluteSize.Y)) - UIMainFrame.AbsolutePosition)
-			Droplist.Size = UDim2.new(0, math.max(Dropdown.Size.X.Offset, sizex), 0, ysize)
-			Droplist.Visible = true
-		else
 			Droplist.Visible = false
-		end
-		local i1 = GetUIBGColor(t)
-		local i2 = i1:Lerp(Color3.new(1, 1, 1), 0.1)
-		for i,v in items do
-			if i == Select.Value then
-				v.BackgroundColor3 = i2
-			else
-				v.BackgroundColor3 = i1
+		end)
+	end
+	local function setOpen(state)
+		if state then
+			for _, child in UIMainFrame:GetChildren() do
+				if child.Name == "AnathemaDropdown" and child ~= Droplist then child.Visible = false end
 			end
+			local origin = UIMainFrame.AbsolutePosition
+			local viewport = UIMainFrame.AbsoluteSize
+			local pos = Dropdown.AbsolutePosition - origin
+			local width = math.min(viewport.X, math.max(180, Dropdown.AbsoluteSize.X))
+			local height = math.min(220, #items * 30 + 12, viewport.Y)
+			local y = pos.Y + Dropdown.AbsoluteSize.Y + 4
+			if y + height > viewport.Y then y = pos.Y - height - 4 end
+			Droplist.Position = UDim2.fromOffset(math.clamp(pos.X, 0, math.max(0, viewport.X - width)), math.clamp(y, 0, math.max(0, viewport.Y - height)))
+			Droplist.Size = UDim2.fromOffset(width, height)
 		end
-	end, Droplist)
-	Util.LinkDestroyI2I(Dropdown, Select)
+		Droplist.Visible = state
+	end
+	Dropdown.Activated:Connect(function() setOpen(not Droplist.Visible) end)
+	local outside = UserInputService.InputBegan:Connect(function(input)
+		if not Droplist.Visible then return end
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+		local point = Vector2.new(input.Position.X, input.Position.Y)
+		local function inside(obj)
+			local p, s = obj.AbsolutePosition, obj.AbsoluteSize
+			return point.X >= p.X and point.X <= p.X + s.X and point.Y >= p.Y and point.Y <= p.Y + s.Y
+		end
+		if not inside(Dropdown) and not inside(Droplist) then setOpen(false) end
+	end)
+	Container.Destroying:Connect(function()
+		outside:Disconnect()
+		Droplist:Destroy()
+		Select:Destroy()
+	end)
+	Select.Changed:Connect(renderValue)
+	renderValue()
 	return Select, Text
 end
 function UI.CreateCanvas(parent)
@@ -2579,7 +1786,7 @@ function UI.CreateCanvas(parent)
 	ListBox.Position = UDim2.new(0, 0, 0, 0)
 	ListBox.Size = UDim2.new(1, 0, 0, 26)
 	ListBox.BackgroundTransparency = 0
-	ListBox.BackgroundColor3 = Color3.new(0.7, 0.7, 0.7)
+	ListBox.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
 	ListBox.BorderSizePixel = 0
 	ListBox.AutomaticSize = Enum.AutomaticSize.Y
 	Stylize(ListBox, {
@@ -2616,7 +1823,7 @@ function UI.CreateScrollCanvas(parent, height)
 	ListBox.Position = UDim2.new(0, 0, 0, 0)
 	ListBox.Size = UDim2.new(1, 0, 0, 26)
 	ListBox.BackgroundTransparency = 0
-	ListBox.BackgroundColor3 = Color3.new(0.7, 0.7, 0.7)
+	ListBox.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
 	ListBox.BorderSizePixel = 0
 	ListBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	ListBox.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -2652,19 +1859,21 @@ end
 function UI.CreateItemListPage()
 	local margin = 5
 	local Frame = Util.Instance("Frame", WindowContent)
-	Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Frame.Size = UDim2.new(0, 360, 0, 205)
+	Frame.AnchorPoint = Vector2.new(0, 0)
+	Frame.Position = UDim2.fromOffset(176, 12)
+	Frame.Size = UDim2.new(1, -188, 1, -24)
 	Frame.BackgroundTransparency = 0
-	Frame.BackgroundColor3 = Color3.new(0, 0, 0)
-	Frame.BorderSizePixel = 1
-	Frame.BorderColor3 = Color3.new(1, 1, 1)
+	Frame.BackgroundColor3 = Color3.fromRGB(18, 20, 34)
+	Frame.BorderSizePixel = 0
 	Frame.Visible = true
-	Frame.ZIndex = 0
+	Frame.ZIndex = 1
 	Frame.ClipsDescendants = true
+	local FrameStroke = Instance.new("UIStroke", Frame)
+	FrameStroke.Color = Color3.fromRGB(82, 86, 130)
+	FrameStroke.Transparency = 0.35
+	FrameStroke.Thickness = 1
 	AddToRenderStep(function(t)
-		Frame.BorderColor3 = GetUIColor(t)
-		Frame.BackgroundColor3 = GetUIBGColor(t)
+		FrameStroke.Color = GetUIColor(t)
 	end, Frame)
 	local Padding = Util.Instance("UIPadding", Frame)
 	Padding.PaddingTop = UDim.new(0, margin)
@@ -2676,7 +1885,7 @@ function UI.CreateItemListPage()
 	BackButton.Position = UDim2.new(0, 0, 0, 0)
 	BackButton.Size = UDim2.new(0, 30, 0, 25)
 	BackButton.BackgroundTransparency = 0
-	BackButton.BackgroundColor3 = Color3.new(1, 1, 1)
+	BackButton.BackgroundColor3 = Color3.fromRGB(37, 40, 65)
 	BackButton.BorderSizePixel = 0
 	BackButton.Text = ""
 	BackButton.AutoButtonColor = true
@@ -2685,13 +1894,13 @@ function UI.CreateItemListPage()
 	BackButtonText.Position = UDim2.new(0.5, 0, 0.5, 0)
 	BackButtonText.Size = UDim2.new(1, margin * -2, 1, -margin)
 	BackButtonText.BackgroundTransparency = 1
-	BackButtonText.Font = Enum.Font.Code
-	BackButtonText.TextColor3 = Color3.new(1, 1, 1)
+	BackButtonText.Font = Enum.Font.Gotham
+	BackButtonText.TextColor3 = Color3.fromRGB(220, 223, 240)
 	BackButtonText.TextTransparency = 0
 	BackButtonText.TextXAlignment = Enum.TextXAlignment.Center
 	BackButtonText.TextYAlignment = Enum.TextYAlignment.Center
 	BackButtonText.TextWrapped = true
-	BackButtonText.TextSize = 20
+	BackButtonText.TextSize = 12
 	BackButtonText.Text = "<"
 	RegisterTextLabel(BackButtonText)
 	Stylize(BackButton)
@@ -2700,21 +1909,21 @@ function UI.CreateItemListPage()
 	SearchBox.Position = UDim2.new(1, 0, 0, 0)
 	SearchBox.Size = UDim2.new(1, -margin - 30, 0, 25)
 	SearchBox.BackgroundTransparency = 0
-	SearchBox.BackgroundColor3 = Color3.new(0.9, 0.9, 0.9)
+	SearchBox.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
 	SearchBox.BorderSizePixel = 0
 	local SearchBoxText = Util.Instance("TextBox", SearchBox)
 	SearchBoxText.AnchorPoint = Vector2.new(0.5, 0.5)
 	SearchBoxText.Position = UDim2.new(0.5, 0, 0.5, 0)
 	SearchBoxText.Size = UDim2.new(1, margin * -2, 1, -margin)
 	SearchBoxText.BackgroundTransparency = 1
-	SearchBoxText.Font = Enum.Font.Code
-	SearchBoxText.TextColor3 = Color3.new(1, 1, 1)
-	SearchBoxText.PlaceholderColor3 = Color3.new(0.7, 0.7, 0.7)
+	SearchBoxText.Font = Enum.Font.Gotham
+	SearchBoxText.TextColor3 = Color3.fromRGB(220, 223, 240)
+	SearchBoxText.PlaceholderColor3 = Color3.fromRGB(132, 137, 165)
 	SearchBoxText.TextTransparency = 0
 	SearchBoxText.TextXAlignment = Enum.TextXAlignment.Left
 	SearchBoxText.TextYAlignment = Enum.TextYAlignment.Center
 	SearchBoxText.TextWrapped = true
-	SearchBoxText.TextSize = 20
+	SearchBoxText.TextSize = 12
 	SearchBoxText.ClearTextOnFocus = false
 	SearchBoxText.Focused:Connect(function()
 		UISound.Click:Play()
@@ -2723,14 +1932,14 @@ function UI.CreateItemListPage()
 		Depthed = true,
 	})
 	SearchBoxText.Text = ""
-	SearchBoxText.PlaceholderText = "Seek..."
+	AnathemaBindPlaceholder(SearchBoxText, "Seek...")
 	RegisterTextLabel(SearchBoxText)
 	local ListBox = Util.Instance("ScrollingFrame", Frame)
 	ListBox.AnchorPoint = Vector2.new(0, 0)
 	ListBox.Position = UDim2.new(0, 0, 0, 25 + margin)
 	ListBox.Size = UDim2.new(1, 0, 1, -margin - 25)
 	ListBox.BackgroundTransparency = 0
-	ListBox.BackgroundColor3 = Color3.new(0.7, 0.7, 0.7)
+	ListBox.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
 	ListBox.BorderSizePixel = 0
 	ListBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	ListBox.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -2792,7 +2001,7 @@ function UI.CreateItemListItem(parent)
 	ListBox.Position = UDim2.new(0, 0, 0, 0)
 	ListBox.Size = UDim2.new(1, 0, 0, 26)
 	ListBox.BackgroundTransparency = 0
-	ListBox.BackgroundColor3 = Color3.new(0.7, 0.7, 0.7)
+	ListBox.BackgroundColor3 = Color3.fromRGB(25, 28, 47)
 	ListBox.BorderSizePixel = 0
 	ListBox.AutomaticSize = Enum.AutomaticSize.Y
 	ListBox.Text = ""
@@ -2813,6 +2022,7 @@ function UI.CreateItemListItem(parent)
 end
 
 local AnathemaSections = {}
+local AnathemaJumpTo
 local function AnathemaSection(parent, id)
     local marker = Util.Instance("Frame", parent)
     marker.Name = "AnathemaSection_" .. id
@@ -2825,333 +2035,21 @@ local function AnathemaSection(parent, id)
 end
 
 local MainPage = UI.CreatePage()
-MainPage.AnchorPoint = Vector2.new(0, 0)
-MainPage.Position = UDim2.new(0, 150, 0, 0)
-MainPage.Size = UDim2.new(1, -150, 1, 0)
-MainPage.BackgroundTransparency = 1
-MainPage.BorderSizePixel = 0
 MainPage.Interactable = true
 AnathemaSection(MainPage, "overview")
--- AnathemaFE intentionally skips the Uhhhhhh cracktro / opening animation.
-CracktroFrame.Visible = false
-CracktroFrame.Active = false
-local AsciiText = UI.CreateText(MainPage, "", 12, Enum.TextXAlignment.Center)
-AsciiText.Visible = false
-Util.ForceTextSize(AsciiText)
-task.spawn(function()
-	-- nice ascii art steve
-	local AsciiTextarts = {
-		{
-			"  ____ ___.__    .__    .__    .__    .__    .__      ",
-			" |    |   \\  |__ |  |__ |  |__ |  |__ |  |__ |  |__   ",
-			" |    |   /  |  \\|  |  \\|  |  \\|  |  \\|  |  \\|  |  \\  ",
-			" |    |  /|   Y  \\   Y  \\   Y  \\   Y  \\   Y  \\   Y  \\ ",
-			" |______/ |___|  /___|  /___|  /___|  /___|  /___|  / ",
-			"               \\/     \\/     \\/     \\/     \\/     \\/  ",
-		},
-		{
-			"  _   _ _     _     _     _     _     _      ",
-			" | | | | |   | |   | |   | |   | |   | |     ",
-			" | | | | |__ | |__ | |__ | |__ | |__ | |__   ",
-			" | | | | '_ \\| '_ \\| '_ \\| '_ \\| '_ \\| '_ \\  ",
-			" | |_| | | | | | | | | | | | | | | | | | | | ",
-			"  \\___/|_| |_|_| |_|_| |_|_| |_|_| |_|_| |_| ",
-		},
-		{
-			"     (   ( /(  ( /(  ( /(  ( /(  ( /(  ( /(  ",
-			"     )\\  )\\()) )\\()) )\\()) )\\()) )\\()) )\\()) ",
-			"  _ ((_)((_)\\ ((_)\\ ((_)\\ ((_)\\ ((_)\\ ((_)\\  ",
-			" | | | || |(_)| |(_)| |(_)| |(_)| |(_)| |(_) ",
-			" | |_| || ' \\ | ' \\ | ' \\ | ' \\ | ' \\ | ' \\  ",
-			"  \\___/ |_||_||_||_||_||_||_||_||_||_||_||_| ",
-		},
-		{
-			" db    db db      db      db      db      db      db      ",
-			" 88    88 88      88      88      88      88      88      ",
-			" 88    88 888888. 888888. 888888. 888888. 888888. 888888. ",
-			" 88    88 88   88 88   88 88   88 88   88 88   88 88   88 ",
-			" 88.  .88 88   88 88   88 88   88 88   88 88   88 88   88 ",
-			"  Y8888P  YP   YP YP   YP YP   YP YP   YP YP   YP YP   YP ",
-		},
-		{
-			" Un    iv er      sa      lH      ie      ra      rc      ",
-			" hi    ca l6      Re      an      im      at      eB      ",
-			" yS    TE VETHERE ALONEUn iversal Hierarc hical6R eanimat ",
-			" eB    yS TE   VE TH   ER EA   LO NE   Un iv   er sa   lH ",
-			" ier  arc ic   al 6R   ea ni   ma te   By ST   EV ET   HE ",
-			"  REALON  EU   ni ve   rs al   Hi er   ar ch   ic al   6R ",
-		},
-		{
-			"animatio'   .jQQQ|;;;;;;;;;;;;;|QQWp,   'tionanim",
-			"ationan'   .JTTVV|;;;;;;;;;;;;;|VVVVm>   'nimatio",
-			"nanima'   _mQc;~~|.............|~~+jQmc   'ionani",
-			"matio'   _QQQQg, |             |  jQQQQc.  'imati",
-			"onan'   <QQQQQQm;|   Uhhhhhh   |.wQQQQWQa,  'onan",
-			"ima'   jWQQQQQQQQ|             |mQQQQQQQQg,  'mat",
-		},
-		{
-			"fore! It is really great! Good product! Feel alive, NO",
-			"st part^ '' '  \"\"*E! (excluding taxes and the bills) N",
-			"r seu- . Uhhhhhh .-|u ihis! It has become something ne",
-			"rse! We ,... . ,.-rs of yellow-orange shiny triangles.",
-			"ns at a really stable framerate, so optimised it handl",
-			"ow, BUY OUR PRODUCT FOR FREE! We know you like it! We ",
-		},
-		{ -- omg hi steveee-
-			"....... gmWWWQQQQQQPg ..............................",
-			":;:;:; qm#WWNWQQWQWWmp ;:;:;:.                  .;:;",
-			"!!?!!?.WX##: W#W :###W.?!!?:.  hi im steve!      .:!",
-			"lilili:ZSXS: XSX :X##Z:ilil!. welcome to Uhhhhhh .!i",
-			"EEEEEE:YLkk2S2SXSXSXZP:EEEEEi:                  :iEE",
-			"%%%%%%%;vnvkkkk2S2vnv;%%%%%%%%%oooooooooooooooo%%%%%",
-		},
-		{
-			"  Get Uhhhhhh today! Feel the difference!       ",
-			"           (-_-)         EPIC!    (^~^)   .vv=E ",
-			"       ()-(:::::)-()         .()-(:::::)-()'    ",
-			"LAME!  || |.....| ||      3=^^'  /...../        ",
-			"       YP |     | YP            (     )   COOL! ",
-			"      Without Uhhhhhh   vs.   With Uhhhhhh      ",
-		},
-		{
-			"55 68 68 68 68 68 68 55 68 68 68 68 68 68",
-			"68 68 68 68 68 68 55 68 68 68 68 68 68 55",
-			"68 68 68 68 68 55 68 68 68 68 68 68 55 68",
-			"68 68 68 68 Uhhhhhh  68 68 68 68 55 68 68",
-			"68 68 68 55 68 68 68 68 68 68 55 68 68 68",
-			"68 68 55 68 68 68 68 68 68 55 68 68 68 68",
-		},
-		{
-			"  Uhhhhhh          ",
-			"  01010101         ",
-			"   01101000        ",
-			"    01101000       ",
-			"     01101000      ",
-			"      01101000     ",
-			"       01101000    ",
-			"        01101000   ",
-			"         Uhhhhhh   ",
-		},
-		{
-			"+-[ Uhhhhhh Reanimate ]-----------------[#]-+",
-			"|    ___                                    |",
-			"|   / o \\   Hello, world! Programmed to     |",
-			"|   \\ l /   work and not to feel.           |",
-			"|    \"\"\"                                    |",
-			"+-------------------------------------------+",
-		},
-		{
-			"       cIyyyyyyF0\\ `TFyyyyyyq8_                 ",
-			"           i+`}0v       V!'xD~                  ",
-			"           &x~[.        W|11   --Uhhhhhh--      ",
-			"          ~W,          }D                       ",
-			"        <d$-         tg3`                       ",
-			"   \".''   ......             '.      \"`   ;     ",
-			"   2]~<J  ;!ci2q' rrrr^   <1_q'   -inr   `0;    ",
-			"   F` '2    F<;            [&I- _+r%)    `@<}!  ",
-			"    ~1}`  `}\\    ;*111*; ^[; .^    +\\    `x     ",
-		},
-		{
-			"  local oldsec = 0          .-+=* Uhhhhhh *=+-. ",
-			"  while i < #keyframes do     (code-ception!)   ",
-			"      local k = keyframes[i]                    ",
-			"      local sec = k.Time // self._optimiser     ",
-			"      while oldsec < sec do                     ",
-			"          local j = math.max(1, i - 1)          ",
-		},
-		{
-			"er failed to process http://assetgame.roblox.com/as",
-			"er failed to process http://assetgame.roblox.com/as",
-			"--------------------------------------------       ",
-			"so, Uhhhhhh...                                     ",
-			"--------------------------------------------       ",
-			"er failed to process http://assetgame.roblox.com/as",
-			"er failed to process http://assetgame.roblox.com/as",
-			"er failed to process http://assetgame.roblox.com/as",
-		},
-		{
-			"usage: clone this repo and change the token and the",
-			"(unless you like chaos) also make sure you have all",
-			"the dev portal cuz Uhhhhhh.                        ",
-			"                                                   ",
-			"\"it's not fast it's shit\"                          ",
-			"Believe me friend, its fuckingly fast, you don't ev",
-		},
-		{
-			"Uhhhhhh  https://discord.gg/NASNUKRBVM  Uhhhhhh",
-			"Uhhhhhh Uhhhhhh Uhhhhhh Uhhhhhh STEVETHEREALONE",
-			"Uhhhhhh Uhhhhhh Uhhhhhh STEVETHEREALONE Uhhhhhh",
-			"Uhhhhhh Uhhhhhh STEVETHEREALONE Uhhhhhh Uhhhhhh",
-			"Uhhhhhh STEVETHEREALONE Uhhhhhh Uhhhhhh Uhhhhhh",
-			"STEVETHEREALONE Uhhhhhh Uhhhhhh Uhhhhhh Uhhhhhh",
-		},
-	}
-	AsciiText.Text = table.concat(AsciiTextarts[math.random(1, #AsciiTextarts)], "\n")
-	local AsciiTextartsw = false
-	local AsciiTextarttr = {}
-	do -- generate transitions
-		-- wipe to right
-		local a = {}
-		for i=0, 59 do
-			local t = i / 60
-			t *= 5
-			t = (t - 1) / 3
-			t *= 5
-			local map = {}
-			for y=0, 64 do
-				local layer = {}
-				for x=0, 64 do
-					local prog = x / 64
-					prog *= 5
-					table.insert(layer, math.round(math.clamp(t - prog + math.random() * 0.2, 0, 1) * 3))
-				end
-				table.insert(map, layer)
-			end
-			table.insert(a, map)
-			task.wait()
-		end
-		table.insert(AsciiTextarttr, a)
-		table.insert(AsciiTextarttr, a)
-		table.insert(AsciiTextarttr, a)
-		table.insert(AsciiTextarttr, a)
-		-- noisy fade
-		a = {}
-		for i=0, 59 do
-			local t = i / 60
-			local map = {}
-			for y=0, 64 do
-				local layer = {}
-				for x=0, 64 do
-					table.insert(layer, math.round(math.clamp(t * 2 - 1 + math.random() * 0.8, 0, 1) * 3))
-				end
-				table.insert(map, layer)
-			end
-			table.insert(a, map)
-			task.wait()
-		end
-		table.insert(AsciiTextarttr, a)
-		-- circle outward
-		a = {}
-		for i=0, 59 do
-			local t = i / 60
-			t *= 5
-			local map = {}
-			for y=0, 64 do
-				local layer = {}
-				for x=0, 64 do
-					local dist = math.sqrt(math.pow(x - 32, 2) + math.pow(y - 32, 2)) / 64
-					dist *= 5
-					table.insert(layer, math.round(math.clamp(t - dist + math.random() * 0.2, 0, 1) * 3))
-				end
-				table.insert(map, layer)
-			end
-			table.insert(a, map)
-			task.wait()
-		end
-		table.insert(AsciiTextarttr, a)
-		-- circle inward
-		a = {}
-		for i=0, 59 do
-			local t = 1 - i / 60
-			t *= 5
-			t -= 1
-			local map = {}
-			for y=0, 64 do
-				local layer = {}
-				for x=0, 64 do
-					local dist = math.sqrt(math.pow(x - 32, 2) + math.pow(y - 32, 2)) / 64
-					dist *= 5
-					table.insert(layer, math.round(math.clamp(dist - t + math.random() * 0.2, 0, 1) * 3))
-				end
-				table.insert(map, layer)
-			end
-			table.insert(a, map)
-			task.wait()
-		end
-		table.insert(AsciiTextarttr, a)
-	end
-	local function switchart()
-		if AsciiTextartsw then return end
-		AsciiTextartsw = true
-		local function animation(art, inv)
-			local transmap = AsciiTextarttr[math.random(1, #AsciiTextarttr)]
-			local rot = math.random(0, 3)
-			local st = os.clock()
-			repeat
-				local t = os.clock() - st
-				local i = math.clamp(math.floor(t * 60) + 1, 1, 60)
-				local render = {}
-				for iy=1, #art do
-					local y = (iy - 1) / #art
-					local conc = ""
-					local txt = art[iy]
-					for ix=1, #txt do
-						local x = (ix - 1) / #txt
-						local ch = string.sub(txt, ix, ix)
-						local b = 0
-						if rot == 0 then
-							b = transmap[i][math.floor(y * 64) + 1][math.floor(x * 64) + 1]
-						elseif rot == 1 then
-							b = transmap[i][math.floor(x * 64) + 1][64 - math.floor(y * 64)]
-						elseif rot == 2 then
-							b = transmap[i][64 - math.floor(y * 64)][64 - math.floor(x * 64)]
-						elseif rot == 3 then
-							b = transmap[i][64 - math.floor(x * 64)][math.floor(y * 64) + 1]
-						end
-						if inv then b = 3 - b end
-						if b == 1 then
-							if (ch == ch:upper() and ch ~= ch:lower()) or ch == "8" or ch == "0" then
-								ch = "?"
-							elseif ch == ":" or ch == ";" or ch == "_" then
-								ch = "."
-							elseif ch == "." or ch == "," or ch == " " then
-								ch = " "
-							else
-								ch = ":"
-							end
-						elseif b == 2 then
-							if (ch == ch:upper() and ch ~= ch:lower()) or ch == "8" or ch == "0" then
-								ch = ":"
-							elseif ch == ":" or ch == ";" or ch == "_" or ch == "." or ch == "," or ch == " " then
-								ch = " "
-							else
-								ch = "."
-							end
-						elseif b == 3 then
-							ch = " "
-						end
-						conc ..= ch
-					end
-					table.insert(render, conc)
-				end
-				AsciiText.Text = table.concat(render, "\n")
-				task.wait()
-			until os.clock() > st + 1
-		end
-		local source = string.split(AsciiText.Text, "\n")
-		local target = source
-		while table.concat(source, "\n") == table.concat(target, "\n") do
-			task.wait()
-			target = AsciiTextarts[math.random(1, #AsciiTextarts)]
-		end
-		animation(source, false)
-		animation(target, true)
-		AsciiText.Text = table.concat(target, "\n")
-		AsciiTextartsw = false
-	end
-	local AsciiTextartin = nil
-	AsciiText.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			AsciiTextartin = input
-		end
-	end)
-	AsciiText.InputEnded:Connect(function(input)
-		if AsciiTextartin == input then
-			AsciiTextartin = nil
-			switchart()
-		end
-	end)
-	switchart()
+-- Independent AnathemaFE overview. The legacy intro and ASCII renderer are removed.
+UI.CreateText(MainPage, "AnathemaFE", 28, Enum.TextXAlignment.Left)
+UI.CreateText(MainPage, "Universal Reanimate control surface", 14, Enum.TextXAlignment.Left)
+UI.CreateSeparator(MainPage)
+UI.CreateText(MainPage, "A clean shell for Reanimate, character, moveset, dance, and module controls.", 13, Enum.TextXAlignment.Left)
+UI.CreateText(MainPage, "Kernel bindings remain unchanged; only the presentation layer is replaced.", 12, Enum.TextXAlignment.Left)
+local OverviewStatus = UI.CreateText(MainPage, "Status: Ready", 14, Enum.TextXAlignment.Left)
+UI.CreateSeparator(MainPage)
+UI.CreateButton(MainPage, "Open Reanimate", 15).Activated:Connect(function()
+	AnathemaJumpTo("reanimate")
+end)
+UI.CreateButton(MainPage, "Open Movesets & Dances", 15).Activated:Connect(function()
+	AnathemaJumpTo("movesets")
 end)
 AnathemaSection(MainPage, "appearance")
 UI.CreateText(MainPage, "AnathemaFE // Appearance", 18, Enum.TextXAlignment.Left)
@@ -8101,7 +6999,7 @@ end
 
 local MovesetsPage = UI.CreateItemListPage()
 MovesetsPage.ZIndex = 1
-MovesetsPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+MovesetsPage.Position = UDim2.fromOffset(176, 12)
 MovesetsPage.Interactable = false
 MovesetsPage.Visible = false
 UI.CreateButton(MainPage, "Movesets &gt;", 20).Activated:Connect(function()
@@ -8109,7 +7007,7 @@ UI.CreateButton(MainPage, "Movesets &gt;", 20).Activated:Connect(function()
 	MovesetsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(MovesetsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8121,7 +7019,7 @@ MovesetsPage.Back.Activated:Connect(function()
 	MovesetsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(MovesetsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8131,7 +7029,7 @@ MovesetsPage.Back.Activated:Connect(function()
 end)
 local DancesPage = UI.CreateItemListPage()
 DancesPage.ZIndex = 1
-DancesPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+DancesPage.Position = UDim2.fromOffset(176, 12)
 DancesPage.Interactable = false
 DancesPage.Visible = false
 UI.CreateButton(MainPage, "Dances &gt;", 20).Activated:Connect(function()
@@ -8139,7 +7037,7 @@ UI.CreateButton(MainPage, "Dances &gt;", 20).Activated:Connect(function()
 	DancesPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(DancesPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8151,7 +7049,7 @@ DancesPage.Back.Activated:Connect(function()
 	DancesPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(DancesPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8161,7 +7059,7 @@ DancesPage.Back.Activated:Connect(function()
 end)
 local KeybindsPage = UI.CreateItemListPage()
 KeybindsPage.ZIndex = 1
-KeybindsPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+KeybindsPage.Position = UDim2.fromOffset(176, 12)
 KeybindsPage.Interactable = false
 KeybindsPage.Visible = false
 UI.CreateButton(MainPage, "Dance Keybinds &gt;", 20).Activated:Connect(function()
@@ -8169,7 +7067,7 @@ UI.CreateButton(MainPage, "Dance Keybinds &gt;", 20).Activated:Connect(function(
 	KeybindsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(KeybindsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8181,7 +7079,7 @@ KeybindsPage.Back.Activated:Connect(function()
 	KeybindsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(KeybindsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8191,7 +7089,7 @@ KeybindsPage.Back.Activated:Connect(function()
 end)
 local MarketPage = UI.CreatePage()
 MarketPage.ZIndex = 1
-MarketPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+MarketPage.Position = UDim2.fromOffset(176, 12)
 MarketPage.Interactable = false
 MarketPage.Visible = false
 UI.CreateButton(MainPage, (math.random() < 0.5 and "Store" or "Marketplace") .. " &gt;", 20).Activated:Connect(function()
@@ -8199,7 +7097,7 @@ UI.CreateButton(MainPage, (math.random() < 0.5 and "Store" or "Marketplace") .. 
 	MarketPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(MarketPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8211,7 +7109,7 @@ UI.CreateButton(MarketPage, "&lt; Hurry back", 20).Activated:Connect(function()
 	MarketPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(MarketPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8555,14 +7453,14 @@ local function AddMoveset(m)
 		Util.LinkDestroyI2C(item, item.Activated:Connect(function()
 			local page = UI.CreatePage()
 			page.ZIndex = 2
-			page.Position = UDim2.new(0.5, 360, 0.5, 0)
+			page.Position = UDim2.fromOffset(176, 12)
 			page.Interactable = false
 			page.Visible = true
 			UI.CreateButton(page, " &lt; Hurry back", 20).Activated:Connect(function()
 				page.Interactable = false
 				MovesetsPage.Interactable = false
 				local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-					Position = UDim2.new(0.5, 360, 0.5, 0),
+					Position = UDim2.fromOffset(176, 12),
 				})
 				tween:Play()
 				tween.Completed:Connect(function()
@@ -8586,7 +7484,7 @@ local function AddMoveset(m)
 			m.Config(page)
 			MovesetsPage.Interactable = false
 			local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Position = UDim2.fromOffset(176, 12),
 			})
 			tween:Play()
 			tween.Completed:Connect(function()
@@ -8621,14 +7519,14 @@ local function AddDance(m)
 		Util.LinkDestroyI2C(item, item.Activated:Connect(function()
 			local page = UI.CreatePage()
 			page.ZIndex = 2
-			page.Position = UDim2.new(0.5, 360, 0.5, 0)
+			page.Position = UDim2.fromOffset(176, 12)
 			page.Interactable = false
 			page.Visible = true
 			UI.CreateButton(page, " &lt; Hurry back", 20).Activated:Connect(function()
 				page.Interactable = false
 				DancesPage.Interactable = false
 				local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-					Position = UDim2.new(0.5, 360, 0.5, 0),
+					Position = UDim2.fromOffset(176, 12),
 				})
 				tween:Play()
 				tween.Completed:Connect(function()
@@ -8657,7 +7555,7 @@ local function AddDance(m)
 			m.Config(page)
 			DancesPage.Interactable = false
 			local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Position = UDim2.fromOffset(176, 12),
 			})
 			tween:Play()
 			tween.Completed:Connect(function()
@@ -8835,7 +7733,7 @@ UI.CreateSeparator(MainPage)
 task.wait()
 local CreditsPage = UI.CreatePage()
 CreditsPage.ZIndex = 1
-CreditsPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+CreditsPage.Position = UDim2.fromOffset(176, 12)
 CreditsPage.Interactable = false
 CreditsPage.Visible = false
 UI.CreateButton(MainPage, "Credits", 15).Activated:Connect(function()
@@ -8843,7 +7741,7 @@ UI.CreateButton(MainPage, "Credits", 15).Activated:Connect(function()
 	CreditsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(CreditsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -8854,7 +7752,7 @@ UI.CreateButton(CreditsPage, "&lt; Hurry back", 20).Activated:Connect(function()
 	CreditsPage.Interactable = false
 	MainPage.Interactable = false
 	local tween = TweenService:Create(CreditsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9102,7 +8000,7 @@ UI.CreateText(CreditsPage, "<font color=\"#4444FF\">[ Discord invite ]</font>", 
 end)
 local ChangelogsPage = UI.CreatePage()
 ChangelogsPage.ZIndex = 1
-ChangelogsPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+ChangelogsPage.Position = UDim2.fromOffset(176, 12)
 ChangelogsPage.Interactable = false
 ChangelogsPage.Visible = false
 UI.CreateButton(MainPage, "Changelogs", 15).Activated:Connect(function()
@@ -9110,7 +8008,7 @@ UI.CreateButton(MainPage, "Changelogs", 15).Activated:Connect(function()
 	ChangelogsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(ChangelogsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9121,7 +8019,7 @@ UI.CreateButton(ChangelogsPage, "&lt; Hurry back", 20).Activated:Connect(functio
 	ChangelogsPage.Interactable = false
 	MainPage.Interactable = false
 	local tween = TweenService:Create(ChangelogsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9150,7 +8048,7 @@ end)
 task.wait()
 local InitLogsPage = UI.CreatePage()
 InitLogsPage.ZIndex = 1
-InitLogsPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+InitLogsPage.Position = UDim2.fromOffset(176, 12)
 InitLogsPage.Interactable = false
 InitLogsPage.Visible = false
 UI.CreateButton(MainPage, "Init Logs", 15).Activated:Connect(function()
@@ -9158,7 +8056,7 @@ UI.CreateButton(MainPage, "Init Logs", 15).Activated:Connect(function()
 	InitLogsPage.Visible = true
 	MainPage.Interactable = false
 	local tween = TweenService:Create(InitLogsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9169,7 +8067,7 @@ UI.CreateButton(InitLogsPage, "&lt; Hurry back", 20).Activated:Connect(function(
 	InitLogsPage.Interactable = false
 	MainPage.Interactable = false
 	local tween = TweenService:Create(InitLogsPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9496,7 +8394,7 @@ local function GetMarketList()
 end
 local LocalPage = UI.CreateItemListPage()
 LocalPage.ZIndex = 2
-LocalPage.Position = UDim2.new(0.5, 360, 0.5, 0)
+LocalPage.Position = UDim2.fromOffset(176, 12)
 LocalPage.Interactable = false
 LocalPage.Visible = false
 local function RefreshUserModules()
@@ -9526,14 +8424,14 @@ local function RefreshUserModules()
 			Util.LinkDestroyI2C(item, item.Activated:Connect(function()
 				local page = UI.CreatePage()
 				page.ZIndex = 3
-				page.Position = UDim2.new(0.5, 360, 0.5, 0)
+				page.Position = UDim2.fromOffset(176, 12)
 				page.Interactable = false
 				page.Visible = true
 				UI.CreateButton(page, " &lt; Hurry back", 20).Activated:Connect(function()
 					page.Interactable = false
 					LocalPage.Interactable = false
 					local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-						Position = UDim2.new(0.5, 360, 0.5, 0),
+						Position = UDim2.fromOffset(176, 12),
 					})
 					tween:Play()
 					tween.Completed:Connect(function()
@@ -9554,7 +8452,7 @@ local function RefreshUserModules()
 						page.Interactable = false
 						LocalPage.Interactable = false
 						local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-							Position = UDim2.new(0.5, 360, 0.5, 0),
+							Position = UDim2.fromOffset(176, 12),
 						})
 						tween:Play()
 						tween.Completed:Connect(function()
@@ -9588,7 +8486,7 @@ local function RefreshUserModules()
 						page.Interactable = false
 						LocalPage.Interactable = false
 						local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-							Position = UDim2.new(0.5, 360, 0.5, 0),
+							Position = UDim2.fromOffset(176, 12),
 						})
 						tween:Play()
 						tween.Completed:Connect(function()
@@ -9599,7 +8497,7 @@ local function RefreshUserModules()
 				end)
 				LocalPage.Interactable = false
 				local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-					Position = UDim2.new(0.5, 0, 0.5, 0),
+					Position = UDim2.fromOffset(176, 12),
 				})
 				tween:Play()
 				tween.Completed:Connect(function()
@@ -9615,7 +8513,7 @@ UI.CreateButton(MarketPage, "See what you have &gt;", 20).Activated:Connect(func
 	LocalPage.Visible = true
 	MarketPage.Interactable = false
 	local tween = TweenService:Create(LocalPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9627,7 +8525,7 @@ LocalPage.Back.Activated:Connect(function()
 	LocalPage.Visible = true
 	MarketPage.Interactable = false
 	local tween = TweenService:Create(LocalPage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9637,7 +8535,7 @@ LocalPage.Back.Activated:Connect(function()
 end)
 local MarkettePage = UI.CreateItemListPage()
 MarkettePage.ZIndex = 2
-MarkettePage.Position = UDim2.new(0.5, 360, 0.5, 0)
+MarkettePage.Position = UDim2.fromOffset(176, 12)
 MarkettePage.Interactable = false
 MarkettePage.Visible = false
 local function RefreshOnlineUserModules()
@@ -9653,14 +8551,14 @@ local function RefreshOnlineUserModules()
 		Util.LinkDestroyI2C(item, item.Activated:Connect(function()
 			local page = UI.CreatePage()
 			page.ZIndex = 3
-			page.Position = UDim2.new(0.5, 360, 0.5, 0)
+			page.Position = UDim2.fromOffset(176, 12)
 			page.Interactable = false
 			page.Visible = true
 			UI.CreateButton(page, " &lt; Hurry back", 20).Activated:Connect(function()
 				page.Interactable = false
 				MarkettePage.Interactable = false
 				local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-					Position = UDim2.new(0.5, 360, 0.5, 0),
+					Position = UDim2.fromOffset(176, 12),
 				})
 				tween:Play()
 				tween.Completed:Connect(function()
@@ -9684,7 +8582,7 @@ local function RefreshOnlineUserModules()
 			end)
 			MarkettePage.Interactable = false
 			local tween = TweenService:Create(page, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Position = UDim2.fromOffset(176, 12),
 			})
 			tween:Play()
 			tween.Completed:Connect(function()
@@ -9699,7 +8597,7 @@ UI.CreateButton(MarketPage, "See what we have &gt;", 20).Activated:Connect(funct
 	MarkettePage.Visible = true
 	MarketPage.Interactable = false
 	local tween = TweenService:Create(MarkettePage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9711,7 +8609,7 @@ MarkettePage.Back.Activated:Connect(function()
 	MarkettePage.Visible = true
 	MarketPage.Interactable = false
 	local tween = TweenService:Create(MarkettePage, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 360, 0.5, 0),
+		Position = UDim2.fromOffset(176, 12),
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -9779,11 +8677,20 @@ local function AnathemaRefreshNavState()
         button.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(220, 223, 245)
     end
 end
-local function AnathemaJumpTo(id)
+AnathemaJumpTo = function(id)
     local marker = AnathemaSections[id]
     if not marker or not marker.Parent then return end
     AnathemaActiveNavId = id
     AnathemaRefreshNavState()
+    for _, page in WindowContent:GetChildren() do
+        if page:IsA("GuiObject") and page ~= MainPage and page ~= AnathemaSidebar then
+            page.Visible = false
+            page.Interactable = false
+        end
+    end
+    for _, popup in UIMainFrame:GetChildren() do
+        if popup.Name == "AnathemaDropdown" then popup.Visible = false end
+    end
     MainPage.Visible = true
     MainPage.Interactable = true
     task.defer(function()
@@ -9844,7 +8751,9 @@ AnathemaLanguageButton.ZIndex = 7
 AnathemaLanguageButton.Parent = AnathemaSidebar
 local function AnathemaUpdateLanguageButton()
     AnathemaBindText(AnathemaLanguageButton, AnathemaLanguage == "zh" and "Language: 中文" or "Language: English")
+    AnathemaSidebarSubtitle.Text = AnathemaLanguage == "zh" and "通用 Reanimate" or "Universal Reanimate"
 end
+AnathemaSetLanguage(AnathemaLanguage)
 AnathemaUpdateLanguageButton()
 AnathemaLanguageButton.Activated:Connect(function()
     AnathemaSetLanguage(AnathemaLanguage == "zh" and "en" or "zh")
