@@ -13,7 +13,7 @@ loadstring(game:HttpGet(
 ## Files
 
 - `loader.lua`: stable public loadstring entry
-- `core.lua`: Uhhhhhh `1.0.9 BETA` compatible runtime with AnathemaFE modern UI skin
+- `core.lua`: Uhhhhhh `1.0.9 BETA` compatible runtime with the AnathemaFE sidebar shell, section navigation, active-section highlight, bilingual toggle, and direct startup
 - `d_limbmap.lua`: Limb Reanimator mapping
 - `d_hatsmap.lua`: Hat Reanimator mapping
 
