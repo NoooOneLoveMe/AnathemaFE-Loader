@@ -747,7 +747,8 @@ UISound.Music.Ended:Connect(function()
 	MusicPlayer.PlayMusic()
 end)
 
-SaveData.SkipIntro = not not SaveData.SkipIntro
+-- AnathemaFE starts directly in the workspace; retain the legacy key for compatibility.
+SaveData.SkipIntro = true
 if SaveData.SkipIntro then
 	MusicPlayer.PlayMusic()
 else
@@ -1152,7 +1153,7 @@ local UIMainWindow, WindowContent do
 	UIMainWindow.Active = true
 	UIMainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
 	UIMainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	UIMainWindow.Size = UDim2.new(0, 360, 0, 240)
+	UIMainWindow.Size = UDim2.new(0, 760, 0, 500)
 	UIMainWindow.BackgroundTransparency = 0
 	UIMainWindow.BackgroundColor3 = Color3.new(1, 1, 1)
 	UIMainWindow.BorderSizePixel = 0
@@ -1204,11 +1205,12 @@ local UIMainWindow, WindowContent do
 	TopBarText.TextColor3 = Color3.new(1, 1, 1)
 	TopBarText.TextSize = 20
 	TopBarText.TextXAlignment = Enum.TextXAlignment.Left
-	TopBarText.Text = "Uhhhhhh Reanimate | v" .. UhhhhhhVersion
+	TopBarText.Text = "AnathemaFE // Universal Reanimate | v" .. UhhhhhhVersion
 	TopBarText.RichText = true
 	RegisterTextLabel(TopBarText)
 	Util.ForceTextSize(TopBarText)
-	if (SaveData.SkipIntro and math.random(2) == 1) or os.date("%m %d") ~= "04 01" then
+	-- Legacy Tux/cracktro quotes are intentionally disabled by AnathemaFE.
+	if false then
 		local quotes = {
 			"Ohhhhhh Re-create | v" .. UhhhhhhVersion,
 			"jumpscare",
@@ -1282,7 +1284,7 @@ local UIMainWindow, WindowContent do
 		TopBarText.Text = quotes[math.random(1, #quotes)]
 		if not aprilfools then
 			task.delay(2, function()
-				TopBarText.Text = "Uhhhhhh Reanimate | v" .. UhhhhhhVersion
+				TopBarText.Text = "AnathemaFE // Universal Reanimate | v" .. UhhhhhhVersion
 			end)
 		end
 	end
@@ -1886,6 +1888,84 @@ end
 task.wait()
 
 local UI = {}
+
+-- AnathemaFE locale registry. Feature modules keep their original bindings;
+-- the shell owns labels and can switch language without rebuilding the runtime.
+local AnathemaLocale = {
+    zh = {
+        ["Overview"] = "概览",
+        ["Appearance"] = "外观",
+        ["Reanimate"] = "Reanimate",
+        ["Character"] = "角色",
+        ["Movesets"] = "动作",
+        ["Modules"] = "模块",
+        ["About"] = "关于",
+        ["Language"] = "语言",
+        ["Ready"] = "已就绪",
+        ["UI Theme"] = "界面主题",
+        ["AnathemaFE // Appearance"] = "AnathemaFE // 外观",
+        ["Movesets & Dances"] = "动作与舞蹈",
+        ["Original Uhhhhhh intro disabled"] = "原 Uhhhhhh 开场已停用",
+        ["Skip Intro"] = "跳过开场",
+        ["Random UI Music"] = "随机界面音乐",
+        ["UI Music"] = "界面音乐",
+        ["Mute UI Music"] = "静音界面音乐",
+        ["Mute Reanim Music"] = "静音 Reanim 音乐",
+        ["Mute Sounds"] = "静音所有声音",
+        ["Reanimator"] = "Reanimator",
+        ["Limb Reanimator"] = "身体 Reanimator",
+        ["Hats Reanimator"] = "帽子 Reanimator",
+        ["Reanimate Character Settings"] = "角色设置",
+        ["Infinite Jump"] = "无限跳跃",
+        ["Noclip"] = "穿墙",
+        ["Smooth Camera"] = "平滑镜头",
+        ["First Person Body"] = "第一人称身体",
+        ["Allow Shiftlock"] = "允许 Shiftlock",
+        ["Can Sit on Seats"] = "允许坐下",
+        ["Can Pickup Tools"] = "允许拾取工具",
+        ["Apply Scale to Gravity"] = "缩放影响重力",
+        ["Void Float"] = "虚空漂浮",
+        ["Reload Modules"] = "重新加载模块",
+        ["Reload User Modules"] = "重新加载用户模块",
+        ["Init Logs"] = "初始化日志",
+        ["Dance Keybinds Enabled"] = "启用舞蹈快捷键",
+        ["Language: 中文"] = "语言：中文",
+        ["Language: English"] = "语言：English",
+    },
+}
+local AnathemaLanguage = SaveData.Language == "en" and "en" or "zh"
+local AnathemaTextBindings = {}
+local function AnathemaTranslate(text)
+    if AnathemaLanguage == "zh" and AnathemaLocale.zh[text] then
+        return AnathemaLocale.zh[text]
+    end
+    return text
+end
+local function AnathemaBindText(obj, source)
+    if type(source) ~= "string" then return obj end
+    local rendered = AnathemaTranslate(source)
+    AnathemaTextBindings[obj] = {source = source, rendered = rendered}
+    obj.Text = rendered
+    return obj
+end
+local function AnathemaSetLanguage(language)
+    AnathemaLanguage = language == "en" and "en" or "zh"
+    SaveData.Language = AnathemaLanguage
+    for obj, binding in pairs(AnathemaTextBindings) do
+        if obj and obj.Parent then
+            -- Dynamic status/log labels may have been updated by a feature;
+            -- only replace labels that still contain their registered value.
+            if obj.Text == binding.rendered or obj.Text == binding.source then
+                local rendered = AnathemaTranslate(binding.source)
+                obj.Text = rendered
+                binding.rendered = rendered
+            end
+        else
+            AnathemaTextBindings[obj] = nil
+        end
+    end
+end
+
 function UI.CreatePage()
 	local Frame = Util.Instance("ScrollingFrame", WindowContent)
 	Frame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1953,7 +2033,7 @@ function UI.CreateText(parent, text, size, alignment)
 		local size = TextService:GetTextSize(Text.ContentText, Text.TextSize, Text.Font, Vector2.new(x - margin * 2, math.huge))
 		Container.Size = UDim2.new(1, 0, 0, size.Y + margin)
 	end
-	Text.Text = text
+	AnathemaBindText(Text, text)
 	update()
 	Text.Changed:Connect(update)
 	return Text
@@ -2011,7 +2091,7 @@ function UI.CreateButton(parent, text, size)
 		local size = TextService:GetTextSize(ButtonText.ContentText, ButtonText.TextSize, ButtonText.Font, Vector2.new(x - margin * 2, math.huge))
 		Container.Size = UDim2.new(1, 0, 0, size.Y + margin * 2)
 	end
-	ButtonText.Text = text
+	AnathemaBindText(ButtonText, text)
 	update()
 	ButtonText.Changed:Connect(update)
 	return Button, ButtonText
@@ -2049,7 +2129,7 @@ function UI.CreateSwitch(parent, text, value)
 		local size = TextService:GetTextSize(ButtonText.ContentText, ButtonText.TextSize, ButtonText.Font, Vector2.new(x - margin * 3 - switchsize, math.huge))
 		Container.Size = UDim2.new(1, 0, 0, math.max(35, size.Y))
 	end
-	ButtonText.Text = text
+	AnathemaBindText(ButtonText, text)
 	update()
 	ButtonText.Changed:Connect(update)
 	local Switch = Util.Instance("Frame", Container)
@@ -2131,8 +2211,8 @@ function UI.CreateTextbox(parent, text, placeholder, size)
 		local size = TextService:GetTextSize(t, BoxText.TextSize, BoxText.Font, Vector2.new(x - margin * 2, math.huge))
 		Container.Size = UDim2.new(1, 0, 0, size.Y + margin * 2 + 2)
 	end
-	BoxText.Text = text
-	BoxText.PlaceholderText = placeholder
+	AnathemaBindText(BoxText, text)
+	BoxText.PlaceholderText = AnathemaTranslate(placeholder)
 	update()
 	BoxText.Changed:Connect(update)
 	return BoxText
@@ -2161,7 +2241,7 @@ function UI.CreateSlider(parent, text, value, min, max, step)
 	Text.TextYAlignment = Enum.TextYAlignment.Center
 	Text.TextWrapped = true
 	Text.TextSize = 20
-	Text.Text = text
+	AnathemaBindText(Text, text)
 	RegisterTextLabel(Text)
 	local Box = Util.Instance("Frame", Container)
 	Box.AnchorPoint = Vector2.new(1, 0)
@@ -2357,7 +2437,7 @@ function UI.CreateDropdown(parent, text, array, value)
 		Container.Size = UDim2.new(1, 0, 0, math.max(35, size1.Y, size2.Y + margin * 2))
 		Dropdown.Size = UDim2.new(0, math.max(60, size2.X + margin * 2 + 2), 0, math.max(25, size2.Y + margin * 2))
 	end
-	Text.Text = text
+	AnathemaBindText(Text, text)
 	DropdownText.Text = array[value]
 	update()
 	Text.Changed:Connect(update)
@@ -2732,25 +2812,31 @@ function UI.CreateItemListItem(parent)
 	return ListBox
 end
 
+local AnathemaSections = {}
+local function AnathemaSection(parent, id)
+    local marker = Util.Instance("Frame", parent)
+    marker.Name = "AnathemaSection_" .. id
+    marker.Size = UDim2.new(1, 0, 0, 1)
+    marker.BackgroundTransparency = 1
+    marker.BorderSizePixel = 0
+    marker.LayoutOrder = #parent:GetChildren()
+    AnathemaSections[id] = marker
+    return marker
+end
+
 local MainPage = UI.CreatePage()
-MainPage.Interactable = false
-CracktroFrame.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		if _totalrendertime < 1 or not IsUhhhhhhFullyLoaded then return end
-		CracktroFrame.Interactable = false
-		CracktroFrame.Visible = true
-		MainPage.Interactable = false
-		local tween = TweenService:Create(CracktroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-			Position = UDim2.new(0.5, -362, 0.5, 0),
-		})
-		tween:Play()
-		tween.Completed:Connect(function()
-			CracktroFrame.Visible = false
-			MainPage.Interactable = true
-		end)
-	end
-end)
+MainPage.AnchorPoint = Vector2.new(0, 0)
+MainPage.Position = UDim2.new(0, 150, 0, 0)
+MainPage.Size = UDim2.new(1, -150, 1, 0)
+MainPage.BackgroundTransparency = 1
+MainPage.BorderSizePixel = 0
+MainPage.Interactable = true
+AnathemaSection(MainPage, "overview")
+-- AnathemaFE intentionally skips the Uhhhhhh cracktro / opening animation.
+CracktroFrame.Visible = false
+CracktroFrame.Active = false
 local AsciiText = UI.CreateText(MainPage, "", 12, Enum.TextXAlignment.Center)
+AsciiText.Visible = false
 Util.ForceTextSize(AsciiText)
 task.spawn(function()
 	-- nice ascii art steve
@@ -3067,23 +3153,11 @@ task.spawn(function()
 	end)
 	switchart()
 end)
+AnathemaSection(MainPage, "appearance")
+UI.CreateText(MainPage, "AnathemaFE // Appearance", 18, Enum.TextXAlignment.Left)
 UI.CreateText(MainPage, `Reanimate V{UhhhhhhVersion}, By STEVE :D`, 15, Enum.TextXAlignment.Right)
 UI.CreateSeparator(MainPage)
-UI.CreateButton(MainPage, " &lt; Back to cool scene", 20).Activated:Connect(function()
-	CracktroFrame.Interactable = false
-	CracktroFrame.Visible = true
-	MainPage.Interactable = false
-	local tween = TweenService:Create(CracktroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-	})
-	tween:Play()
-	tween.Completed:Connect(function()
-		CracktroFrame.Interactable = true
-	end)
-end)
-UI.CreateSwitch(MainPage, "Skip Intro", SaveData.SkipIntro).Changed:Connect(function(value)
-	SaveData.SkipIntro = value
-end)
+UI.CreateText(MainPage, "Original Uhhhhhh intro disabled", 12, Enum.TextXAlignment.Left)
 UI.CreateDropdown(MainPage, "UI Theme", {
 	"RGB/Default",
 	"ALONE",
@@ -7207,6 +7281,8 @@ end
 
 do
 	SaveData.SelectedReanimator = SaveData.SelectedReanimator or 1
+	AnathemaSection(MainPage, "reanimate")
+	UI.CreateText(MainPage, "Reanimate", 18, Enum.TextXAlignment.Left)
 	local ReanimateMethodSelect = UI.CreateDropdown(MainPage, "Reanimator", {"Limb Reanimator", "Hats Reanimator"}, SaveData.SelectedReanimator)
 	local ReanimatorConfigTitle = UI.CreateText(MainPage, "-=+ Limb Reanimator Config +=-", 15, Enum.TextXAlignment.Center)
 	local SelectedReanimator = LimbReanimator
@@ -7270,7 +7346,9 @@ end
 UI.CreateSeparator(MainPage)
 
 do
-	UI.CreateText(MainPage, "Reanimate Character Settings", 15, Enum.TextXAlignment.Center)
+	AnathemaSection(MainPage, "character")
+UI.CreateText(MainPage, "Character", 18, Enum.TextXAlignment.Left)
+UI.CreateText(MainPage, "Reanimate Character Settings", 15, Enum.TextXAlignment.Center)
 	UI.CreateSwitch(MainPage, "Infinite Jump", Reanimate.InfiniteJump).Changed:Connect(function(val)
 		Reanimate.InfiniteJump = val
 		SaveData.NoInfiniteJump = not val
@@ -8005,6 +8083,8 @@ TextChatService.MessageReceived:Connect(function(message)
 end)
 task.wait()
 
+AnathemaSection(MainPage, "movesets")
+UI.CreateText(MainPage, "Movesets & Dances", 18, Enum.TextXAlignment.Left)
 local MovementStyles = {}
 local DanceableDances = {}
 
@@ -9284,32 +9364,14 @@ local function ForceModuleReload(force)
 	if not Reanimate.Character then return end
 	Reanimate.CreateCharacter()
 end
+AnathemaSection(MainPage, "modules")
+UI.CreateText(MainPage, "Modules", 18, Enum.TextXAlignment.Left)
 UI.CreateSeparator(MainPage)
 UI.CreateText(MainPage, "<b>MODULES MANAGEMENT</b>", 15, Enum.TextXAlignment.Center)
 UI.CreateButton(MainPage, "Reload Modules", 20).Activated:Connect(function()
-	CracktroFrame.Interactable = false
-	CracktroFrame.Visible = true
-	MainPage.Interactable = false
-	local tween = TweenService:Create(CracktroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-	})
-	tween:Play()
-	tween.Completed:Connect(function()
-		CracktroFrame.Interactable = true
-	end)
 	ForceModuleReload("ALL")
 end)
 UI.CreateButton(MainPage, "Reload User Modules", 20).Activated:Connect(function()
-	CracktroFrame.Interactable = false
-	CracktroFrame.Visible = true
-	MainPage.Interactable = false
-	local tween = TweenService:Create(CracktroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-	})
-	tween:Play()
-	tween.Completed:Connect(function()
-		CracktroFrame.Interactable = true
-	end)
 	ForceModuleReload("SKIPHASH")
 end)
 UI.CreateText(MainPage, "\n\n\n<b>DANGER ZONE</b>", 15, Enum.TextXAlignment.Center)
@@ -9660,6 +9722,147 @@ end)
 
 ForceModuleReload(false)
 
+-- AnathemaFE navigation shell: fixed sidebar + jump targets replaces the old
+-- single-column control hunt while leaving every feature binding untouched.
+local AnathemaSidebar = Util.Instance("Frame", WindowContent)
+AnathemaSidebar.Name = "AnathemaSidebar"
+AnathemaSidebar.Position = UDim2.new(0, 0, 0, 0)
+AnathemaSidebar.Size = UDim2.new(0, 140, 1, 0)
+AnathemaSidebar.BackgroundColor3 = Color3.fromRGB(17, 19, 31)
+AnathemaSidebar.BackgroundTransparency = 0.04
+AnathemaSidebar.BorderSizePixel = 0
+AnathemaSidebar.ZIndex = 6
+local AnathemaSidebarPadding = Instance.new("UIPadding")
+AnathemaSidebarPadding.PaddingTop = UDim.new(0, 12)
+AnathemaSidebarPadding.PaddingBottom = UDim.new(0, 10)
+AnathemaSidebarPadding.PaddingLeft = UDim.new(0, 8)
+AnathemaSidebarPadding.PaddingRight = UDim.new(0, 8)
+AnathemaSidebarPadding.Parent = AnathemaSidebar
+local AnathemaSidebarLayout = Instance.new("UIListLayout")
+AnathemaSidebarLayout.Padding = UDim.new(0, 6)
+AnathemaSidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+AnathemaSidebarLayout.Parent = AnathemaSidebar
+local AnathemaSidebarStroke = Instance.new("UIStroke")
+AnathemaSidebarStroke.Color = Color3.fromRGB(126, 92, 255)
+AnathemaSidebarStroke.Transparency = 0.55
+AnathemaSidebarStroke.Thickness = 1
+AnathemaSidebarStroke.Parent = AnathemaSidebar
+local AnathemaSidebarTitle = Instance.new("TextLabel")
+AnathemaSidebarTitle.Name = "Brand"
+AnathemaSidebarTitle.Size = UDim2.new(1, 0, 0, 42)
+AnathemaSidebarTitle.BackgroundTransparency = 1
+AnathemaSidebarTitle.TextColor3 = Color3.fromRGB(235, 238, 255)
+AnathemaSidebarTitle.Font = Enum.Font.GothamBold
+AnathemaSidebarTitle.TextSize = 16
+AnathemaSidebarTitle.TextWrapped = true
+AnathemaSidebarTitle.TextXAlignment = Enum.TextXAlignment.Left
+AnathemaSidebarTitle.Text = "ANATHEMAFE"
+AnathemaSidebarTitle.LayoutOrder = 1
+AnathemaSidebarTitle.Parent = AnathemaSidebar
+local AnathemaSidebarSubtitle = Instance.new("TextLabel")
+AnathemaSidebarSubtitle.Size = UDim2.new(1, 0, 0, 25)
+AnathemaSidebarSubtitle.BackgroundTransparency = 1
+AnathemaSidebarSubtitle.TextColor3 = Color3.fromRGB(150, 154, 180)
+AnathemaSidebarSubtitle.Font = Enum.Font.Gotham
+AnathemaSidebarSubtitle.TextSize = 10
+AnathemaSidebarSubtitle.TextWrapped = true
+AnathemaSidebarSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+AnathemaSidebarSubtitle.Text = "Universal Reanimate"
+AnathemaSidebarSubtitle.LayoutOrder = 2
+AnathemaSidebarSubtitle.Parent = AnathemaSidebar
+local AnathemaNavButtons = {}
+local AnathemaActiveNavId = nil
+local function AnathemaRefreshNavState()
+    for id, button in pairs(AnathemaNavButtons) do
+        local active = id == AnathemaActiveNavId
+        button.BackgroundColor3 = active and Color3.fromRGB(68, 54, 118) or Color3.fromRGB(28, 30, 48)
+        button.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(220, 223, 245)
+    end
+end
+local function AnathemaJumpTo(id)
+    local marker = AnathemaSections[id]
+    if not marker or not marker.Parent then return end
+    AnathemaActiveNavId = id
+    AnathemaRefreshNavState()
+    MainPage.Visible = true
+    MainPage.Interactable = true
+    task.defer(function()
+        local offset = marker.AbsolutePosition.Y - MainPage.AbsolutePosition.Y + MainPage.CanvasPosition.Y - 8
+        MainPage.CanvasPosition = Vector2.new(0, math.max(0, offset))
+    end)
+end
+local function AnathemaNavButton(id, label)
+    local button = Instance.new("TextButton")
+    button.Name = "Nav_" .. id
+    button.Size = UDim2.new(1, 0, 0, 31)
+    button.BackgroundColor3 = Color3.fromRGB(28, 30, 48)
+    button.BackgroundTransparency = 0.08
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = false
+    button.TextColor3 = Color3.fromRGB(220, 223, 245)
+    button.Font = Enum.Font.GothamMedium
+    button.TextSize = 13
+    button.TextXAlignment = Enum.TextXAlignment.Left
+    button.Text = label
+    button.LayoutOrder = 10 + #AnathemaSidebar:GetChildren()
+    button.ZIndex = 7
+    button.Parent = AnathemaSidebar
+    AnathemaBindText(button, label)
+    AnathemaNavButtons[id] = button
+    button.MouseEnter:Connect(function()
+        if id ~= AnathemaActiveNavId then
+            button.BackgroundColor3 = Color3.fromRGB(49, 43, 82)
+        end
+    end)
+    button.MouseLeave:Connect(function()
+        AnathemaRefreshNavState()
+    end)
+    button.Activated:Connect(function()
+        AnathemaJumpTo(id)
+    end)
+    return button
+end
+AnathemaNavButton("overview", "Overview")
+AnathemaNavButton("appearance", "Appearance")
+AnathemaNavButton("reanimate", "Reanimate")
+AnathemaNavButton("character", "Character")
+AnathemaNavButton("movesets", "Movesets")
+AnathemaNavButton("modules", "Modules")
+local AnathemaLanguageButton = Instance.new("TextButton")
+AnathemaLanguageButton.Name = "LanguageToggle"
+AnathemaLanguageButton.Size = UDim2.new(1, 0, 0, 31)
+AnathemaLanguageButton.BackgroundColor3 = Color3.fromRGB(38, 34, 66)
+AnathemaLanguageButton.BackgroundTransparency = 0.05
+AnathemaLanguageButton.BorderSizePixel = 0
+AnathemaLanguageButton.AutoButtonColor = false
+AnathemaLanguageButton.TextColor3 = Color3.fromRGB(235, 238, 255)
+AnathemaLanguageButton.Font = Enum.Font.GothamMedium
+AnathemaLanguageButton.TextSize = 12
+AnathemaLanguageButton.TextXAlignment = Enum.TextXAlignment.Left
+AnathemaLanguageButton.LayoutOrder = 50
+AnathemaLanguageButton.ZIndex = 7
+AnathemaLanguageButton.Parent = AnathemaSidebar
+local function AnathemaUpdateLanguageButton()
+    AnathemaBindText(AnathemaLanguageButton, AnathemaLanguage == "zh" and "Language: 中文" or "Language: English")
+end
+AnathemaUpdateLanguageButton()
+AnathemaLanguageButton.Activated:Connect(function()
+    AnathemaSetLanguage(AnathemaLanguage == "zh" and "en" or "zh")
+    AnathemaUpdateLanguageButton()
+end)
+local AnathemaReadyLabel = Instance.new("TextLabel")
+AnathemaReadyLabel.Size = UDim2.new(1, 0, 0, 26)
+AnathemaReadyLabel.BackgroundTransparency = 1
+AnathemaReadyLabel.TextColor3 = Color3.fromRGB(126, 229, 181)
+AnathemaReadyLabel.Font = Enum.Font.Gotham
+AnathemaReadyLabel.TextSize = 11
+AnathemaReadyLabel.TextXAlignment = Enum.TextXAlignment.Left
+AnathemaReadyLabel.LayoutOrder = 51
+AnathemaReadyLabel.ZIndex = 7
+AnathemaReadyLabel.Parent = AnathemaSidebar
+AnathemaBindText(AnathemaReadyLabel, "Ready")
+AnathemaJumpTo("overview")
+
 local d = function()
 	-- registry overflow bypass !! (so tuff)
 	local function rng(t) return t[math.random(#t)] end
@@ -9907,5 +10110,6 @@ local d = function()
 			while isok do task.wait() end
 		end
 	end end
-end d()
+end
+-- AnathemaFE shell does not run the legacy random cracktro/pusher task.
 
