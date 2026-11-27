@@ -1,5 +1,5 @@
 -- AnathemaFE v0.2.0 · 单文件构建
--- 生成：reproducible-v01 · 模块 19 · build feb9062856b9c583
+-- 生成：reproducible-v01 · 模块 19 · build e25925d282483a8c
 -- 用法：loadstring(game:HttpGet("<URL>"))()
 -- 停止：__ANATHEMA.stop()
 --
@@ -11,7 +11,7 @@ local __ANATHEMA_BUILD = {
 	version = "0.2.0",
 	stamp = "reproducible-v01",
 	modules = 19,
-	hash = "feb9062856b9c583",
+	hash = "e25925d282483a8c",
 }
 
 do
@@ -4575,9 +4575,25 @@ return i18n
 
 local ctx = ...
 local tokens = ctx.require("ui.tokens")
-local theme = ctx.require("ui.theme")
+local themeModule = ctx.require("ui.theme")
 
 local kit = {}
+
+-- 关键修复：themeModule 是**模块**（只有 create/toColor3），不是主题实例。
+-- 上一版直接写 theme().color(...) → 调用 nil → 挂载即崩 → 用户看到"执行了没反应"。
+local themeInstance = nil
+local function theme()
+	if not themeInstance then
+		themeInstance = themeModule.create("Prism Dark")
+	end
+	return themeInstance
+end
+kit.setTheme = function(instance)
+	themeInstance = instance
+end
+kit.getTheme = function()
+	return theme()
+end
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -4618,7 +4634,7 @@ end
 local function stroke(instance, colorRole, transparency, thickness)
 	local existing = instance:FindFirstChildOfClass("UIStroke")
 	local uiStroke = existing or make("UIStroke", instance, {})
-	uiStroke.Color = theme.color(colorRole)
+	uiStroke.Color = theme().color(colorRole)
 	uiStroke.Thickness = thickness or 1
 	uiStroke.Transparency = transparency or 0.35
 	uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -4664,7 +4680,7 @@ function kit.icon(parent, name, size, color)
 		BackgroundTransparency = 1,
 	})
 	local segments = SEG[name]
-	local lineColor = color or theme.color("textMuted")
+	local lineColor = color or theme().color("textMuted")
 	if not segments then
 		make("Frame", holder, {
 			Name = "Dot",
@@ -4711,6 +4727,9 @@ end
 -- ===== 窗口（手机可拖）=====
 function kit.window(parent, opts)
 	opts = opts or {}
+	if opts.theme then
+		themeInstance = opts.theme
+	end
 	local layout = kit.layoutFor(workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize)
 
 	local gui = make("ScreenGui", parent, {
@@ -4726,7 +4745,7 @@ function kit.window(parent, opts)
 		Size = UDim2.fromOffset(opts.width or layout.width, opts.height or layout.height),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = theme.color("bg"),
+		BackgroundColor3 = theme().color("bg"),
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
@@ -4745,7 +4764,7 @@ function kit.window(parent, opts)
 	local sidebar = make("Frame", root, {
 		Name = "Sidebar",
 		Size = UDim2.new(0, sidebarWidth(), 1, 0),
-		BackgroundColor3 = theme.color("surface"),
+		BackgroundColor3 = theme().color("surface"),
 		BorderSizePixel = 0,
 	})
 	make("UIListLayout", sidebar, {
@@ -4763,7 +4782,7 @@ function kit.window(parent, opts)
 		Name = "Footer",
 		Size = UDim2.new(1, -sidebarWidth(), 0, 32),
 		Position = UDim2.new(0, sidebarWidth(), 1, -32),
-		BackgroundColor3 = theme.color("surface"),
+		BackgroundColor3 = theme().color("surface"),
 		BackgroundTransparency = 0.4,
 		BorderSizePixel = 0,
 	})
@@ -4875,7 +4894,7 @@ function kit.window(parent, opts)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamBlack,
 		TextSize = win.isCompact and 11 or 15,
-		TextColor3 = theme.color("accent"),
+		TextColor3 = theme().color("accent"),
 		Text = win.isCompact and "A" or win.title,
 		TextXAlignment = win.isCompact and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left,
 		LayoutOrder = 0,
@@ -4891,7 +4910,7 @@ function kit.navItem(parent, opts)
 	local instance = make("TextButton", parent, {
 		Name = "Nav_" .. tostring(opts.id or opts.label or "item"),
 		Size = UDim2.new(1, 0, 0, 40),
-		BackgroundColor3 = theme.color("surface"),
+		BackgroundColor3 = theme().color("surface"),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		AutoButtonColor = false,
@@ -4903,7 +4922,7 @@ function kit.navItem(parent, opts)
 		Name = "Mark",
 		Size = UDim2.new(0, 3, 0, 20),
 		Position = UDim2.new(0, 0, 0.5, -10),
-		BackgroundColor3 = theme.color("accent"),
+		BackgroundColor3 = theme().color("accent"),
 		BorderSizePixel = 0,
 		Visible = opts.active == true,
 	})
@@ -4915,7 +4934,7 @@ function kit.navItem(parent, opts)
 		Position = UDim2.new(0, opts.compact and 19 or 12, 0.5, -11),
 		BackgroundTransparency = 1,
 	})
-	local icon = kit.icon(iconHolder, opts.icon, 22, theme.color(opts.active and "text" or "textMuted"))
+	local icon = kit.icon(iconHolder, opts.icon, 22, theme().color(opts.active and "text" or "textMuted"))
 	icon.Position = UDim2.fromScale(0, 0)
 
 	local label = make("TextLabel", instance, {
@@ -4925,7 +4944,7 @@ function kit.navItem(parent, opts)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamMedium,
 		TextSize = 13,
-		TextColor3 = theme.color(opts.active and "text" or "textMuted"),
+		TextColor3 = theme().color(opts.active and "text" or "textMuted"),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Text = opts.label or "",
 		TextTruncate = Enum.TextTruncate.AtEnd,
@@ -4937,8 +4956,8 @@ function kit.navItem(parent, opts)
 	function item.setActive(active)
 		item.mark.Visible = active == true
 		instance.BackgroundTransparency = active and 0.15 or 1
-		instance.BackgroundColor3 = theme.color("surfaceAlt")
-		label.TextColor3 = theme.color(active and "text" or "textMuted")
+		instance.BackgroundColor3 = theme().color("surfaceAlt")
+		label.TextColor3 = theme().color(active and "text" or "textMuted")
 	end
 
 	function item.setLabel(value)
@@ -4983,13 +5002,13 @@ function kit.button(parent, opts)
 	local instance = make("TextButton", parent, {
 		Name = "Btn_" .. tostring(opts.id or opts.text or "btn"),
 		Size = UDim2.new(1, 0, 0, height),
-		BackgroundColor3 = theme.color(variant.bg),
+		BackgroundColor3 = theme().color(variant.bg),
 		BackgroundTransparency = variant.transparent and 1 or 0,
 		BorderSizePixel = 0,
 		AutoButtonColor = false,
 		Font = Enum.Font.GothamMedium,
 		TextSize = opts.textSize or 13,
-		TextColor3 = theme.color(variant.fg),
+		TextColor3 = theme().color(variant.fg),
 		Text = opts.text or "",
 	})
 	round(instance, "sm")
@@ -5016,12 +5035,12 @@ function kit.button(parent, opts)
 
 	function handle.setActive(active)
 		if active then
-			instance.BackgroundColor3 = theme.color("accentSoft")
-			instance.TextColor3 = theme.color("text")
+			instance.BackgroundColor3 = theme().color("accentSoft")
+			instance.TextColor3 = theme().color("text")
 			stroke(instance, "accent", 0.2, 1)
 		else
-			instance.BackgroundColor3 = theme.color(variant.bg)
-			instance.TextColor3 = theme.color(variant.fg)
+			instance.BackgroundColor3 = theme().color(variant.bg)
+			instance.TextColor3 = theme().color(variant.fg)
 			if variant.stroke then
 				stroke(instance, variant.stroke, 0.4, 1)
 			end
@@ -5036,9 +5055,9 @@ function kit.button(parent, opts)
 			tween(instance, { BackgroundTransparency = 0.4 }, "fast")
 			stroke(instance, "accent", 0.3, 1)
 		else
-			tween(instance, { BackgroundColor3 = theme.color("surfaceHover") }, "fast")
+			tween(instance, { BackgroundColor3 = theme().color("surfaceHover") }, "fast")
 		end
-		instance.TextColor3 = theme.color(variant.fg)
+		instance.TextColor3 = theme().color(variant.fg)
 	end)
 	instance.MouseLeave:Connect(function()
 		if not enabled then
@@ -5047,7 +5066,7 @@ function kit.button(parent, opts)
 		if variant.transparent then
 			tween(instance, { BackgroundTransparency = 1 }, "fast")
 		else
-			tween(instance, { BackgroundColor3 = theme.color(variant.bg) }, "fast")
+			tween(instance, { BackgroundColor3 = theme().color(variant.bg) }, "fast")
 		end
 	end)
 	instance.MouseButton1Down:Connect(function()
@@ -5080,7 +5099,7 @@ function kit.card(parent, opts)
 		Name = "Card_" .. tostring(opts.id or opts.title or "card"),
 		Size = UDim2.new(1, 0, 0, opts.height or 0),
 		AutomaticSize = opts.height and Enum.AutomaticSize.None or Enum.AutomaticSize.Y,
-		BackgroundColor3 = theme.color("surface"),
+		BackgroundColor3 = theme().color("surface"),
 		BorderSizePixel = 0,
 	})
 	round(instance, "md")
@@ -5104,7 +5123,7 @@ function kit.card(parent, opts)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamBold,
 		TextSize = 14,
-		TextColor3 = theme.color("text"),
+		TextColor3 = theme().color("text"),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Text = opts.title or "",
 		LayoutOrder = 0,
@@ -5116,7 +5135,7 @@ function kit.card(parent, opts)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.Gotham,
 		TextSize = 12,
-		TextColor3 = theme.color("textDim"),
+		TextColor3 = theme().color("textDim"),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextWrapped = true,
 		Text = opts.subtitle or "",
@@ -5181,7 +5200,7 @@ function kit.switch(parent, opts)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.Gotham,
 		TextSize = 13,
-		TextColor3 = theme.color("text"),
+		TextColor3 = theme().color("text"),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Text = opts.label or "",
 		TextTruncate = Enum.TextTruncate.AtEnd,
@@ -5190,7 +5209,7 @@ function kit.switch(parent, opts)
 		Name = "Track",
 		Size = UDim2.fromOffset(40, 22),
 		Position = UDim2.new(1, -40, 0.5, -11),
-		BackgroundColor3 = theme.color(opts.value and "accent" or "surfaceHover"),
+		BackgroundColor3 = theme().color(opts.value and "accent" or "surfaceHover"),
 		BorderSizePixel = 0,
 	})
 	round(track, "pill")
@@ -5198,7 +5217,7 @@ function kit.switch(parent, opts)
 		Name = "Knob",
 		Size = UDim2.fromOffset(16, 16),
 		Position = UDim2.new(opts.value and 1 or 0, opts.value and -18 or 2, 0.5, -8),
-		BackgroundColor3 = theme.color("accentText"),
+		BackgroundColor3 = theme().color("accentText"),
 		BorderSizePixel = 0,
 	})
 	round(knob, "pill")
@@ -5212,7 +5231,7 @@ function kit.switch(parent, opts)
 
 	function handle.set(next)
 		value = next == true
-		tween(track, { BackgroundColor3 = theme.color(value and "accent" or "surfaceHover") }, "fast")
+		tween(track, { BackgroundColor3 = theme().color(value and "accent" or "surfaceHover") }, "fast")
 		tween(knob, { Position = UDim2.new(value and 1 or 0, value and -18 or 2, 0.5, -8) }, "fast")
 	end
 
@@ -5235,7 +5254,7 @@ function kit.segmented(parent, opts)
 	local container = make("Frame", parent, {
 		Name = "Segmented",
 		Size = UDim2.new(1, 0, 0, 34),
-		BackgroundColor3 = theme.color("surfaceAlt"),
+		BackgroundColor3 = theme().color("surfaceAlt"),
 		BorderSizePixel = 0,
 	})
 	round(container, "sm")
@@ -5253,8 +5272,8 @@ function kit.segmented(parent, opts)
 	local function paint()
 		for id, entry in pairs(buttons) do
 			local active = (id == value)
-			entry.button.BackgroundColor3 = theme.color(active and "accentSoft" or "surfaceAlt")
-			entry.label.TextColor3 = theme.color(active and "text" or "textMuted")
+			entry.button.BackgroundColor3 = theme().color(active and "accentSoft" or "surfaceAlt")
+			entry.label.TextColor3 = theme().color(active and "text" or "textMuted")
 			if active then
 				stroke(entry.button, "accent", 0.2, 1)
 			end
@@ -5266,7 +5285,7 @@ function kit.segmented(parent, opts)
 		local button = make("TextButton", container, {
 			Name = "Seg_" .. tostring(id),
 			Size = UDim2.new(1 / math.max(#items, 1), -2, 1, -4),
-			BackgroundColor3 = theme.color("surfaceAlt"),
+			BackgroundColor3 = theme().color("surfaceAlt"),
 			BorderSizePixel = 0,
 			AutoButtonColor = false,
 			Text = "",
@@ -5278,7 +5297,7 @@ function kit.segmented(parent, opts)
 			BackgroundTransparency = 1,
 			Font = Enum.Font.GothamMedium,
 			TextSize = 12,
-			TextColor3 = theme.color("textMuted"),
+			TextColor3 = theme().color("textMuted"),
 			Text = text,
 		})
 		buttons[id] = { button = button, label = label }
@@ -5329,7 +5348,7 @@ function kit.slider(parent, opts)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.Code,
 		TextSize = 12,
-		TextColor3 = theme.color("text"),
+		TextColor3 = theme().color("text"),
 		TextXAlignment = Enum.TextXAlignment.Right,
 		Text = "",
 	})
@@ -5337,14 +5356,14 @@ function kit.slider(parent, opts)
 		Name = "Track",
 		Size = UDim2.new(1, 0, 0, 4),
 		Position = UDim2.new(0, 0, 0.5, 6),
-		BackgroundColor3 = theme.color("surfaceHover"),
+		BackgroundColor3 = theme().color("surfaceHover"),
 		BorderSizePixel = 0,
 	})
 	round(track, "pill")
 	local fill = make("Frame", track, {
 		Name = "Fill",
 		Size = UDim2.new(0, 0, 1, 0),
-		BackgroundColor3 = theme.color("accent"),
+		BackgroundColor3 = theme().color("accent"),
 		BorderSizePixel = 0,
 	})
 	round(fill, "pill")
@@ -5353,7 +5372,7 @@ function kit.slider(parent, opts)
 		Size = UDim2.fromOffset(14, 14),
 		Position = UDim2.new(0, 0, 0.5, 1),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = theme.color("accent"),
+		BackgroundColor3 = theme().color("accent"),
 		BorderSizePixel = 0,
 	})
 	round(knob, "pill")
@@ -5444,7 +5463,7 @@ function kit.kbd(parent, key)
 	local frame = make("Frame", parent, {
 		Name = "Kbd",
 		Size = UDim2.fromOffset(math.max(24, #tostring(key) * 8 + 10), 22),
-		BackgroundColor3 = theme.color("surfaceAlt"),
+		BackgroundColor3 = theme().color("surfaceAlt"),
 		BorderSizePixel = 0,
 	})
 	round(frame, "xs")
@@ -5454,7 +5473,7 @@ function kit.kbd(parent, key)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.Code,
 		TextSize = 11,
-		TextColor3 = theme.color("text"),
+		TextColor3 = theme().color("text"),
 		Text = tostring(key),
 	})
 	return frame
@@ -5464,7 +5483,7 @@ function kit.scrim(parent, alpha)
 	local scrim = make("TextButton", parent, {
 		Name = "Scrim",
 		Size = UDim2.fromScale(1, 1),
-		BackgroundColor3 = theme.color("scrim"),
+		BackgroundColor3 = theme().color("scrim"),
 		BackgroundTransparency = 1 - (alpha or 0.45),
 		BorderSizePixel = 0,
 		Text = "",
@@ -5486,7 +5505,7 @@ function kit.toast(parent, message, kind)
 		Name = "Toast",
 		Size = UDim2.new(0, 260, 0, 44),
 		Position = UDim2.new(1, -276, 1, -68 - toastCount * 52),
-		BackgroundColor3 = theme.color(palette[kind] or "surfaceAlt"),
+		BackgroundColor3 = theme().color(palette[kind] or "surfaceAlt"),
 		BorderSizePixel = 0,
 		ZIndex = (tokens.layer and tokens.layer.toast) or 60,
 	})
@@ -5498,7 +5517,7 @@ function kit.toast(parent, message, kind)
 		BackgroundTransparency = 1,
 		Font = Enum.Font.Gotham,
 		TextSize = 12,
-		TextColor3 = theme.color(kind == "error" and "accentText" or "text"),
+		TextColor3 = theme().color(kind == "error" and "accentText" or "text"),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextWrapped = true,
 		Text = tostring(message or ""),
@@ -6385,7 +6404,26 @@ local RunService = game:GetService("RunService")
 
 return function(options)
 	options = options or {}
+
+	-- 单例守卫要能自愈：上一版中途报错会留下 __ANATHEMA.alive = true，
+	-- 那时新版本会静默不挂载（用户看到的就是"执行了没反应"）。
 	local existing = rawget(_G, "__ANATHEMA")
+	if type(existing) == "table" then
+		local stillMounted = false
+		local okRoot = pcall(function()
+			stillMounted = existing.app ~= nil
+				and existing.app.root ~= nil
+				and existing.app.root.Parent ~= nil
+		end)
+		if not okRoot or not stillMounted then
+			warn("[anathema] 检测到残留状态，先清理再挂载")
+			if type(existing.stop) == "function" then
+				pcall(existing.stop)
+			end
+			rawset(_G, "__ANATHEMA", nil)
+			existing = nil
+		end
+	end
 	if type(existing) == "table" and existing.alive then
 		warn("[anathema] 已在运行；先 __ANATHEMA.stop()")
 		return existing
@@ -6397,10 +6435,19 @@ return function(options)
 	end
 
 	local theme = themeModule.create(options.themeName or "Prism Dark")
-	local mounted = app.mount({
+
+	local okMount, mounted = pcall(app.mount, {
 		theme = theme,
 		runtime = runtime,
 	})
+	if not okMount then
+		warn("[anathema] UI 挂载失败: " .. tostring(mounted))
+		-- 这里不 return：引擎仍可单独跑；错误已经由打包器兜底卡片显示过
+		mounted = nil
+	end
+	if not mounted then
+		return nil, "mount-failed"
+	end
 
 	local connections = {}
 	local alive = true
@@ -6462,10 +6509,73 @@ end
 
 	end
 
-	local entry = require("entry_v3")
-	local ok, result = pcall(entry, {})
-	if not ok then
-		warn("[anathema] 启动失败: " .. tostring(result))
+	-- 打包器级兜底：即使所有模块都炸，也必须让用户**看到**错误，而不是"没反应"
+	local function __anathema_fatal(message)
+		warn("[anathema] 启动失败: " .. tostring(message))
+		local ok = pcall(function()
+			local function host()
+				local env = getfenv(0)
+				local fn = env.gethui or env.get_hidden_gui or rawget(_G, "gethui")
+				if type(fn) == "function" then
+					return fn()
+				end
+				return game:GetService("CoreGui")
+			end
+			local gui = Instance.new("ScreenGui")
+			gui.Name = "AnathemaFatal"
+			gui.IgnoreGuiInset = true
+			gui.DisplayOrder = 2000000000
+			gui.Parent = host()
+			local card = Instance.new("Frame")
+			card.Size = UDim2.fromOffset(460, 150)
+			card.Position = UDim2.new(0.5, 0, 0.5, 0)
+			card.AnchorPoint = Vector2.new(0.5, 0.5)
+			card.BackgroundColor3 = Color3.fromRGB(28, 22, 26)
+			card.BorderSizePixel = 0
+			card.Parent = gui
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 12)
+			corner.Parent = card
+			local stroke = Instance.new("UIStroke")
+			stroke.Color = Color3.fromRGB(255, 100, 110)
+			stroke.Thickness = 1.5
+			stroke.Parent = card
+			local title = Instance.new("TextLabel")
+			title.Size = UDim2.new(1, -28, 0, 24)
+			title.Position = UDim2.fromOffset(14, 12)
+			title.BackgroundTransparency = 1
+			title.Font = Enum.Font.GothamBold
+			title.TextSize = 15
+			title.TextColor3 = Color3.fromRGB(255, 120, 130)
+			title.TextXAlignment = Enum.TextXAlignment.Left
+			title.Text = "ANATHEMA 启动失败"
+			title.Parent = card
+			local body = Instance.new("TextLabel")
+			body.Size = UDim2.new(1, -28, 0, 96)
+			body.Position = UDim2.fromOffset(14, 40)
+			body.BackgroundTransparency = 1
+			body.Font = Enum.Font.Code
+			body.TextSize = 11
+			body.TextWrapped = true
+			body.TextYAlignment = Enum.TextYAlignment.Top
+			body.TextXAlignment = Enum.TextXAlignment.Left
+			body.TextColor3 = Color3.fromRGB(230, 230, 240)
+			body.Text = tostring(message)
+			body.Parent = card
+		end)
+		if not ok then
+			print("[anathema] fatal: " .. tostring(message))
+		end
+	end
+
+	local entryOk, entry = pcall(require, "entry_v3")
+	if not entryOk then
+		__anathema_fatal("加载入口失败: " .. tostring(entry))
+		return
+	end
+	local runOk, result = pcall(entry, {})
+	if not runOk then
+		__anathema_fatal("入口执行失败: " .. tostring(result))
 		return
 	end
 	return result
