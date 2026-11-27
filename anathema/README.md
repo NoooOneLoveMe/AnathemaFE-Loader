@@ -1,76 +1,66 @@
-# anathema × Uhhhhhh（loadstring 分支）
+# AnathemaFE v0.1（新 UI · 侧边栏）
 
-**这是你要的那一版**：Uhhhhhh 的 UI、模块系统、moveset/dance、主题、音乐、帽子碰撞、fling——
-**全部原样保留**，只替换了 hat reanim 的每帧路径。
+**这是你要的那一版新 UI 的第一版**：侧边栏 7 页、中英切换、Movesets 的 Style Pack 过渡、Reanimate 页接引擎。
 
-## 加载（原版一模一样的用法）
-
-```lua
--- 补丁版（推荐）
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NoooOneLoveMe/AnathemaFE-Loader/anathema-proto/anathema/uhhhhh-anathema.lua"))()
-```
-
-界面上和原版 Uhhhhhh 完全一致：点 **Reanimate** 就是原来的按钮，进 Hat / Limb 模式、选 moveset/dance、
-开帽子碰撞、fling——行为不变。
-
-## 改了什么（只有 4 处）
-
-| 补丁 | 位置 | 内容 |
-|---|---|---|
-| **P1** | `SetUACFrameNetless` 入口 | `dt` 做 NaN 校验。NaN 也是 number，`dt <= 0` 拦不住，一帧 Infinity 位移会把帽子甩飞 |
-| **P2** | 同上 | 位置 NaN 闸门。NaN 写进 CFrame 会让部件从渲染消失，且 `lastcf` 被污染后**永久**失效 |
-| **P3** | 写完 CFrame 之后 | 每帧记录 `|写入位置 − 目标位置|`，暴露到 `_G.ANATHEMA` |
-| **P4** | `GetHatMappedMeshAndTexture` | 帽子映射从「每顶帽子每帧线性扫整个 HatMap + 三次字符串比较」(O(n²)) 改成一次性建索引 + 哈希查找 (O(1))，首个匹配语义完全一致 |
-
-**没有改**：UI、`GiveFunctionsToFunction`、模块加载、`AnimLib`、`LimbReanimator`、claim 流程、
-帽子碰撞策略、`content/` 资源、存档格式。
-
-## 怎么确认它在跑
-
-控制台执行：
+## 加载
 
 ```lua
-print(_G.ANATHEMA)
+-- raw（主用）
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NoooOneLoveMe/AnathemaFE-Loader/anathema-proto/anathema/anathema-v01.lua"))()
+
+-- jsdelivr（备用，换版本带 ?v=）
+loadstring(game:HttpGet("https://cdn.jsdelivr.net/gh/NoooOneLoveMe/AnathemaFE-Loader@anathema-proto/anathema/anathema-v01.lua"))()
 ```
 
-应该看到（跑一段之后数字会涨）：
+停止：`__ANATHEMA.stop()`
 
-```lua
-{
-  version = 1, patch = "P1-P4",
-  hatFrames = 0,          -- 目前没用到（留给后续补丁）
-  writeFrames = 1234,     -- 帽子写了多少帧
-  skips = 0,              -- 未命中映射的次数（正常应为 0 或很小的数）
-  driftEwma = 0.012,      -- 漂移指数平均
-  driftMax = 0.34,        -- 峰值
-  hatLookups = 5678,      -- 映射查询次数
-  hatIndexBuilds = 3,     -- 索引重建次数（换帽子会 +1）
-}
-```
+## v0.1 里哪些是真的、哪些是占位
 
-判断标准：
+| 真做完了 | 占位（v0.2 补） |
+|---|---|
+| 侧边栏 7 页（Home / Reanimate / Movesets / Dances / Store / Credits / Settings） | Dances / Store / Credits / Settings 的**细节内容** |
+| 窗口拖动 · 页脚版本号 · 中/EN 一键切换（只重刷文案，不重建页面） | 语言选择放进 Settings 页 |
+| 页面栈：切页记住滚动位置 | 转场动画（现在是直接切） |
+| **Reanimate 页**：状态条（phase/drift/目标数）· 大 Reanimate 按钮 · Respawn/Refresh/Stop · Hats/Limbs 分段 · 体型 ± 按钮 | Permadeath / 重生位置 / 帽子碰撞方法 / Fling 分区 / HatMap 预览 / 体型滑杆 |
+| Reanimate 按钮**真的接引擎**（claim → live，状态条会变） | Respawn / Refresh 的具体行为 |
+| **Movesets 页**：Hero + 标题/简介/键位 + 立绘占位 + 上一组/下一组 | 真实动作组数据（现在 3 个演示条目） |
+| **Style Pack 过渡**：crimson ↔ mono 在 0.26s 内插值（颜色/渐变/字号/字距），字体在中点硬切 | 背景网格/扫描线实现 · 菱形立绘框 · 真实渲染图 |
 
-- `writeFrames` 在涨 → 每帧路径活着
-- `hatIndexBuilds` 很小（1–5）→ 没有每帧重建索引
-- `driftEwma` 稳定在 0.05 以下 → 跟手正常
-- `skips` 持续快速增长 → 帽子库里缺条目（正常，我只补了内核）
+## 测试步骤（3 分钟）
 
-## 后续补丁（按收益排序，等你反馈后做）
+1. 加载 → 出现 900×520 窗口，左侧 "ANATHEMA" + 7 个侧栏项，页脚显示版本与 `中/EN`
+2. 点侧栏 7 项 → 每页都能开；再点回 Movesets，滚动位置应该还在
+3. 点页脚 `中/EN` → 导航文字立刻变英文（页面不重建、不闪）
+4. 进 **Movesets** → 点「下一组 ▶」三次：**整页颜色/渐变/字号/字体在 0.26 秒内过渡**（crimson 深红宽体 ↔ mono 黑白创意字）
+5. 进 **Reanimate** → 点大按钮：
+   - 状态条应从 `未启动` 变 `接管中` 再到 `运行中`，并显示 drift 与目标数
+   - 若显示 `启动失败：xxx`，把那句话发我
+6. 点「Stop」→ 状态回 `已停止`
 
-1. **claim 仪式去 `task.wait`**（原版用 0.1 + 0.15 秒 yield，不可中断）
-2. **hat collide 的每帧候选择优**（现在每帧对全部帽子做距离/朝向排序）
-3. **LimbReanimator 的 RootPart 模式切换**（StreamingEnabled 下有重复重建）
-4. **漂移面板**（把 `_G.ANATHEMA` 画到 UI 上，设置页加一栏）
+## 已知的、预期内的
+
+| 现象 | 原因 |
+|---|---|
+| Reanimate 后帽子/身体没变化 | v0.1 的引擎只是驱动当前帽子的 CFrame，**还没接 hat map 摆位与动作播放**（那是 v0.2） |
+| Movesets 的数据是假的 | 3 个演示条目，真实内容在 v0.2 从 `content/<id>.lua` 读 |
+| 立绘是渐变块 + "RENDER(v0.2)" | 预渲染流水线还没做 |
+| 切换页面没有动画 | 转场留给 v0.2（先保证不闪、不丢滚动位置） |
+| 体型 ± 只改数字 | 还没接到引擎的 `CharacterScale` |
+
+## 构建信息
+
+| 项 | 值 |
+|---|---|
+| 模块数 | 21 |
+| 字节 | 174166 |
+| build | `90d91424c812c1eb` |
+| SHA-256 | `445DCA16BC8F278169EE5404DEBB9E9D5D3D7E2017D31DE30A12194FE057E7BD` |
+| 纯逻辑断言 | 48 条全过（含 router / style_pack / i18n 三件套） |
 
 ## 文件说明
 
 | 文件 | 说明 |
 |---|---|
-| `anathema/uhhhhh-anathema.lua` | **本文件**：Uhhhhhh + P1–P4 补丁（338793 字节，build `3d6a16e7`） |
-| `anathema/prototype.lua` | 上一版走错方向的独立原型（自绘诊断面板，不含 Uhhhhhh UI）。保留仅供参考，**不要用它测功能** |
-
-## 删除分支
-
-```powershell
-git push origin --delete anathema-proto
-```
+| `anathema/anathema-v01.lua` | **本文件**：新 UI v0.1（侧边栏） |
+| `anathema/uhhhhh-anathema.lua` | 上一版：Uhhhhhh 原版 UI + hat reanim 内核补丁（功能完整，UI 是旧的） |
+| `anathema/prototype.lua` | 更早的独立诊断面板原型，**不要用** |
