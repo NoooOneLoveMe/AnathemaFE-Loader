@@ -1,5 +1,5 @@
 -- anathema prototype · 单文件构建
--- 生成时间：2026-11-27 11:01:42
+-- 生成时间：2026-11-27 11:07:44
 -- 模块数：11
 -- 用法：loadstring(game:HttpGet("<URL>"))()
 --      或直接把本文件内容粘进执行器
@@ -7,7 +7,7 @@
 -- 停止：__ANATHEMA_PROTO.stop()
 
 local __ANATHEMA_BUILD = {
-	stamp = "2026-11-27 11:01:42",
+	stamp = "2026-11-27 11:07:44",
 	modules = 11,
 	hash = "689800a195db7346",
 }
